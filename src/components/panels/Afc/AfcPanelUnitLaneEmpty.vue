@@ -11,7 +11,14 @@
             <v-col class="px-6 pb-6">
                 <v-tooltip top>
                     <template #activator="{ on, attrs }">
-                        <v-btn dense small class="w-100 elevation-0" v-bind="attrs" v-on="on" @click="ejectLane">
+                        <v-btn
+                            dense
+                            small
+                            class="w-100 elevation-0"
+                            :disabled="isAmsUnit"
+                            v-bind="attrs"
+                            v-on="on"
+                            @click="ejectLane">
                             <v-icon small>{{ mdiEject }}</v-icon>
                         </v-btn>
                     </template>
@@ -39,6 +46,11 @@ export default class AfcPanelUnitLaneEmpty extends Mixins(BaseMixin, AfcMixin) {
 
     get prep() {
         return this.lane?.prep ?? false
+    }
+
+    get isAmsUnit() {
+        const unit = this.getAfcUnitObject(this.lane.unit)
+        return (unit.type ?? '').toUpperCase() === 'AMS'
     }
 
     get text() {

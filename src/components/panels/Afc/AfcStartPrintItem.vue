@@ -103,21 +103,21 @@ import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
 
 @Component({})
 export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
-    @Prop({ required: true }) lane!: Lane
-    @Prop({ required: true }) showUnusedTools!: boolean
-    @Prop({ required: true }) file!: FileStateGcodefile
 
-    filamentTextColor = filamentTextColor
+    @Prop({ required: true }) lane!: Lane;
+    @Prop({ required: true }) showUnusedTools!: boolean;
+    @Prop({ required: true }) file!: FileStateGcodefile;
 
-    mdiCheck = mdiCheck
-    mdiAlertOutline = mdiAlertOutline
+    filamentTextColor = filamentTextColor;
 
-    currentMap = ''
-    currentSpoolId = ''
-    curFile: FileStateGcodefile | null = null
+    mdiCheck = mdiCheck;
+    mdiAlertOutline = mdiAlertOutline;
+
+    currentMap = '';
+    currentSpoolId = '';
+    curFile: FileStateGcodefile | null = null;
 
     @Watch('lane.map')
-
     @Watch('lane.spool_id')
 
     @Watch('file')
@@ -174,8 +174,8 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 
 
         return this.compareMaterials(this.fileFilamentType, this.lane.material)
-
     }
+
 
     get isWeightSufficient() {
         if (!this.fileWeight) return true
