@@ -29,7 +29,6 @@
                                 v-bind="attrs"
                                 class="px-2 minwidth-0 ml-3"
                                 :loading="loadings.includes('ejectSpool')"
-                                :disabled="isAmsUnit"
                                 v-on="onTooltip"
                                 @click="unloadSpool = true">
                                 <v-icon>{{ mdiEject }}</v-icon>
@@ -165,7 +164,7 @@
                     <v-btn color="" text @click="clearSpoolmanSpool">
                         {{ $t('Panels.AfcSpoolPanel.No') }}
                     </v-btn>
-                    <v-btn color="success" text :disabled="isAmsUnit" @click="ejectSpool">
+                    <v-btn color="success" text @click="ejectSpool">
                         {{ $t('Panels.AfcSpoolPanel.Yes') }}
                     </v-btn>
                 </v-card-actions>
@@ -221,11 +220,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
         )
 
         return max_id.toString().length
-    }
-
-    get isAmsUnit() {
-        const unit = this.getAfcUnitObject(this.laneData.unit)
-        return (unit.type ?? '').toUpperCase() === 'AMS'
     }
 
     get headers() {
