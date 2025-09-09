@@ -147,6 +147,11 @@ export default class AfcMixin extends Vue {
         return this.getPrinterSettings(key) ?? {}
     }
 
+    getAfcUnitObject(unit: string) {
+        const key = `AFC_unit ${unit}`
+        return this.getPrinterObject(key) ?? {}
+    }
+
     getAfcBufferObject(buffer: string) {
         const key_buffer = `AFC_buffer ${buffer}`
         return this.getPrinterObject(key_buffer)

@@ -175,7 +175,6 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 
         return this.compareMaterials(this.fileFilamentType, this.lane.material)
 
-    }
 
     get isWeightSufficient() {
         if (!this.fileWeight) return true
