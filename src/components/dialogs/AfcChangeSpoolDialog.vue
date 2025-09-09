@@ -260,9 +260,10 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     }
 
     checkLoadedSpool(spoolId: number): number {
+
         const lane = this.lanesData.find((lane) => lane.spool_id === spoolId.toString())
         return lane ? lane.lane : -1
-    }
+
 
     updateSpool() {
         console.log('Updating spool with the following data:')
@@ -428,9 +429,11 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
     initializeFields() {
         if (this.laneData) {
+
             this.filamentType = this.laneData.material || ''
             this.remainingWeight = this.laneData.weight || 0
             this.spoolColor = this.laneData.color || '#ffffff'
+
         }
     }
 
