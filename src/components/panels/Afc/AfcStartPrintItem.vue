@@ -33,8 +33,10 @@
                                             :style="{
                                                 color: filamentTextColor(fileColor),
                                                 fontSize: '1.1em',
+
                                                 minWidth: '50px',
                                                 maxWidth: '50px',
+
                                             }">
                                             {{ fileWeight }}
                                         </div>
@@ -58,8 +60,10 @@
                                             :style="{
                                                 color: filamentTextColor(spoolColor),
                                                 fontSize: '1.1em',
+
                                                 minWidth: '50px',
                                                 maxWidth: '50px',
+
                                             }">
                                             {{ spoolWeight }}
                                         </div>
@@ -113,16 +117,20 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     curFile: FileStateGcodefile | null = null
 
     @Watch('lane.map')
+
     @Watch('lane.spool_id')
+
     @Watch('file')
     onLaneInfoChange() {
         if (
             this.lane.map !== this.currentMap ||
+
             this.lane.spool_id !== this.currentSpoolId ||
             this.curFile !== this.file
         ) {
             this.currentMap = this.lane.map
             this.currentSpoolId = this.lane.spool_id
+
             this.curFile = this.file
             this.updateMatchInfo()
         }
@@ -164,7 +172,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     get isTypeMatch() {
         if (!this.fileFilamentType) return true
 
+
         return this.compareMaterials(this.fileFilamentType, this.lane.material)
+
     }
 
     get isWeightSufficient() {
@@ -194,7 +204,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
             return {} as ServerSpoolmanStateSpool
         }
 
+
         const spoolId = Number(this.lane?.spool_id)
+
 
         if (spoolId && this.$store.state.server.spoolman.spools) {
             const spool = this.$store.state.server.spoolman.spools.find(
@@ -212,7 +224,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.color_hex) {
             color = `#${this.spoolmanSpool.filament.color_hex}`
         } else {
+
             color = this.lane.color ?? '#000'
+
         }
 
         return color
@@ -224,7 +238,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.material) {
             material = this.spoolmanSpool.filament.material
         } else {
+
             material = this.lane.material ?? ''
+
         }
 
         return material
@@ -235,7 +251,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.remaining_weight) {
             weight = Math.round(this.spoolmanSpool.remaining_weight)
         } else {
+
             weight = Math.round(this.lane.weight ?? 0)
+
         }
 
         return `${weight} g`
@@ -311,23 +329,28 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 
 .lane-details {
     display: flex;
+
     align-items: center;
     flex: 1;
     cursor: pointer;
     gap: 8px;
+
     justify-content: space-between;
+
 }
 
 .filament-info {
     display: flex;
     flex-direction: column;
     align-items: center;
+
     min-width: 50px;
 }
 
 .filament-type {
     max-width: 60px;
     min-width: 60px;
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -335,9 +358,11 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 }
 
 .match-status {
+
     margin-left: 6px;
     max-width: 20px;
     flex: 0 0 20px;
+
 }
 
 .disabled {
