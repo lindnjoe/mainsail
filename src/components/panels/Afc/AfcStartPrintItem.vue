@@ -33,8 +33,10 @@
                                             :style="{
                                                 color: filamentTextColor(fileColor),
                                                 fontSize: '1.1em',
-                                                minWidth: '64px',
-                                                maxWidth: '64px',
+
+                                                minWidth: '60px',
+                                                maxWidth: '60px',
+
                                             }">
                                             {{ fileWeight }}
                                         </div>
@@ -58,8 +60,10 @@
                                             :style="{
                                                 color: filamentTextColor(spoolColor),
                                                 fontSize: '1.1em',
-                                                minWidth: '64px',
-                                                maxWidth: '64px',
+
+                                                minWidth: '60px',
+                                                maxWidth: '60px',
+
                                             }">
                                             {{ spoolWeight }}
                                         </div>
@@ -126,7 +130,6 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         ) {
             this.currentMap = this.lane.map
             this.currentSpoolId = this.lane.spool_id
-
 
             this.curFile = this.file
             this.updateMatchInfo()
@@ -340,8 +343,10 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 }
 
 .filament-type {
-    max-width: 90px;
-    min-width: 90px;
+
+    max-width: 80px;
+    min-width: 80px;
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
