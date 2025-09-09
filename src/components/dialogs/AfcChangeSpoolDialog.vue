@@ -264,7 +264,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
         const lane = this.lanesData.find((lane) => lane.spool_id === spoolId.toString())
         return lane ? lane.lane : -1
 
-    }
 
     updateSpool() {
         console.log('Updating spool with the following data:')

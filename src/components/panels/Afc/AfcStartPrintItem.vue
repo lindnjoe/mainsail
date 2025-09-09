@@ -34,8 +34,8 @@
                                                 color: filamentTextColor(fileColor),
                                                 fontSize: '1.1em',
 
-                                                minWidth: '50px',
-                                                maxWidth: '50px',
+                                                minWidth: '64px',
+                                                maxWidth: '64px',
 
                                             }">
                                             {{ fileWeight }}
@@ -61,8 +61,8 @@
                                                 color: filamentTextColor(spoolColor),
                                                 fontSize: '1.1em',
 
-                                                minWidth: '50px',
-                                                maxWidth: '50px',
+                                                minWidth: '64px',
+                                                maxWidth: '64px',
 
                                             }">
                                             {{ spoolWeight }}
@@ -330,12 +330,10 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 .lane-details {
     display: flex;
 
+    justify-content: space-between;
     align-items: center;
     flex: 1;
     cursor: pointer;
-    gap: 8px;
-
-    justify-content: space-between;
 
 }
 
@@ -344,12 +342,12 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     flex-direction: column;
     align-items: center;
 
-    min-width: 50px;
+    min-width: 60px;
 }
 
 .filament-type {
-    max-width: 60px;
-    min-width: 60px;
+    max-width: 90px;
+    min-width: 90px;
 
     white-space: nowrap;
     overflow: hidden;
@@ -359,9 +357,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 
 .match-status {
 
-    margin-left: 6px;
+    margin-left: 10px;
     max-width: 20px;
-    flex: 0 0 20px;
+    flex: 1;
 
 }
 
