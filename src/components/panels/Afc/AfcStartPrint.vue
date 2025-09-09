@@ -9,10 +9,12 @@
                 hide-details
                 class="mb-2" />
             <v-divider class="mt-0 mb-0" />
+
             <div class="header-row pb-2 pt-2 d-flex align-center">
                 <span class="text-left pl-10 ml-7">{{ $t('Panels.AfcPanel.File') }}</span>
                 <span class="spacer" style="min-width: 100px"></span>
                 <span class="text-right pr-10 mr-6">{{ $t('Panels.AfcPanel.Tools') }}</span>
+
             </div>
             <v-divider class="mt-0 mb-0" />
             <div :class="{ 'lanes-container': lanesData.length > 4 }">
@@ -94,9 +96,11 @@ export default class AfcStartPrint extends Mixins(AfcMixin, BaseMixin) {
 <style scoped>
 .header-row {
     display: flex;
+
     justify-content: space-between;
     font-weight: bold;
 }
+
 
 .header-column {
     flex: 1;
@@ -106,6 +110,8 @@ export default class AfcStartPrint extends Mixins(AfcMixin, BaseMixin) {
 .lanes-container {
     max-height: 330px;
     overflow-y: auto;
+
     overflow-x: hidden;
+
 }
 </style>
