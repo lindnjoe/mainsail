@@ -96,7 +96,7 @@ export default class AfcStartPrint extends Mixins(AfcMixin, BaseMixin) {
 .header-row {
     display: flex;
 
-    justify-content: space-around;
+    justify-content: space-between;
     font-weight: bold;
 }
 

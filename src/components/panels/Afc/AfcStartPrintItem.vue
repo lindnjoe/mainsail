@@ -238,7 +238,8 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.material) {
             material = this.spoolmanSpool.filament.material
         } else {
-        material = this.lane.material ?? ''
+
+            material = this.lane.material ?? ''
 
         }
 
@@ -333,6 +334,8 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     flex: 1;
     cursor: pointer;
     gap: 8px;
+
+    justify-content: space-between;
 
 }
 
