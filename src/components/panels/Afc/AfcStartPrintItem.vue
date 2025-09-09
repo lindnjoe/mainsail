@@ -113,16 +113,21 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     curFile: FileStateGcodefile | null = null
 
     @Watch('lane.map')
-    @Watch('lane.spool.spool_id')
+
+    @Watch('lane.spool_id')
+
     @Watch('file')
     onLaneInfoChange() {
         if (
             this.lane.map !== this.currentMap ||
-            this.lane.spool.spool_id !== this.currentSpoolId ||
+
+            this.lane.spool_id !== this.currentSpoolId ||
             this.curFile !== this.file
         ) {
             this.currentMap = this.lane.map
-            this.currentSpoolId = this.lane.spool.spool_id
+            this.currentSpoolId = this.lane.spool_id
+
+
             this.curFile = this.file
             this.updateMatchInfo()
         }
@@ -164,7 +169,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     get isTypeMatch() {
         if (!this.fileFilamentType) return true
 
-        return this.compareMaterials(this.fileFilamentType, this.lane.spool.material)
+
+        return this.compareMaterials(this.fileFilamentType, this.lane.material)
+
     }
 
     get isWeightSufficient() {
@@ -194,7 +201,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
             return {} as ServerSpoolmanStateSpool
         }
 
-        const spoolId = Number(this.lane?.spool?.spool_id)
+
+        const spoolId = Number(this.lane?.spool_id)
+
 
         if (spoolId && this.$store.state.server.spoolman.spools) {
             const spool = this.$store.state.server.spoolman.spools.find(
@@ -212,7 +221,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.color_hex) {
             color = `#${this.spoolmanSpool.filament.color_hex}`
         } else {
-            color = this.lane.spool?.color ?? '#000'
+
+            color = this.lane.color ?? '#000'
+
         }
 
         return color
@@ -224,7 +235,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.material) {
             material = this.spoolmanSpool.filament.material
         } else {
-            material = this.lane.spool?.material ?? ''
+
+            material = this.lane.material ?? ''
+
         }
 
         return material
@@ -235,7 +248,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.remaining_weight) {
             weight = Math.round(this.spoolmanSpool.remaining_weight)
         } else {
-            weight = Math.round(this.lane.spool?.weight) ?? 0
+
+            weight = Math.round(this.lane.weight ?? 0)
+
         }
 
         return `${weight} g`

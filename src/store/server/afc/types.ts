@@ -34,7 +34,12 @@ export interface Lane {
     prep: boolean
     tool_loaded: boolean
     loaded_to_hub: boolean
-    spool: Spool
+
+    spool_id: string
+    color: string
+    material: string
+    weight: number
+
     runout_lane: string
     filament_status: string
     filament_status_led: string
@@ -42,12 +47,7 @@ export interface Lane {
     empty: string
 }
 
-export interface Spool {
-    material: string
-    spool_id: string
-    color: string
-    weight: number
-}
+
 
 export interface Extruder {
     name: string
