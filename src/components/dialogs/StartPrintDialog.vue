@@ -19,9 +19,10 @@
                     {{ question }}
                 </p>
             </v-card-text>
-            <start-print-dialog-spoolman v-if="moonrakerComponents.includes('spoolman')" :file="file" />
+            <start-print-dialog-afc v-if="afcEnabled" :file="file" @tool-count="validateToolCount" />
+            <start-print-dialog-spoolman v-else-if="moonrakerComponents.includes('spoolman')" :file="file" />
             <template v-if="moonrakerComponents.includes('timelapse')">
-                <v-divider v-if="!moonrakerComponents.includes('spoolman')" class="mt-3 mb-2" />
+                <v-divider v-if="!moonrakerComponents.includes('spoolman') || !afcEnabled" class="mt-3 mb-2" />
                 <v-card-text class="py-0">
                     <settings-row :title="$t('Dialogs.StartPrint.Timelapse')">
                         <v-switch v-model="timelapseEnabled" hide-details class="mt-0" />
@@ -35,7 +36,7 @@
                 <v-btn
                     color="primary"
                     text
-                    :disabled="printerIsPrinting || !klipperReadyForGui"
+                    :disabled="printerIsPrinting || !klipperReadyForGui || !validToolCount"
                     @click="startPrint(file.filename)">
                     {{ $t('Dialogs.StartPrint.Print') }}
                 </v-btn>
@@ -52,14 +53,19 @@ import SettingsRow from '@/components/settings/SettingsRow.vue'
 import { mdiPrinter3d } from '@mdi/js'
 import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
 import { defaultBigThumbnailBackground, thumbnailBigMin } from '@/store/variables'
+import StartPrintDialogAfc from '@/components/dialogs/StartPrintDialogAfc.vue'
+import StartPrintDialogSpoolman from '@/components/dialogs/StartPrintDialogSpoolman.vue'
 
 @Component({
     components: {
         SettingsRow,
+        StartPrintDialogAfc,
+        StartPrintDialogSpoolman,
     },
 })
 export default class StartPrintDialog extends Mixins(BaseMixin) {
     mdiPrinter3d = mdiPrinter3d
+    validToolCount = true
 
     @Prop({ required: true, default: false })
     declare readonly bool: boolean
@@ -110,6 +116,10 @@ export default class StartPrintDialog extends Mixins(BaseMixin) {
         return `${this.filamentVendor} - ${this.filamentName}`
     }
 
+    get afcEnabled() {
+        return 'AFC' in this.$store.state.printer
+    }
+
     get question() {
         if (this.active_spool)
             return this.$t('Dialogs.StartPrint.DoYouWantToStartFilenameFilament', {
@@ -156,6 +166,10 @@ export default class StartPrintDialog extends Mixins(BaseMixin) {
         filename = (this.currentPath + '/' + filename).substring(1)
         this.closeDialog()
         this.$socket.emit('printer.print.start', { filename: filename }, { action: 'switchToDashboard' })
+    }
+
+    validateToolCount(valid: boolean) {
+        this.validToolCount = valid
     }
 
     closeDialog() {

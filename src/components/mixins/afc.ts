@@ -23,6 +23,11 @@ export default class AfcMixin extends Vue {
         return this.afc.lanes ?? []
     }
 
+    // Return lane objects for easier template handling
+    get lanesData() {
+        return this.afcLanes.map((name) => this.getAfcLaneObject(name))
+    }
+
     get afcLoadedSpools() {
         if (this.afcLanes.length === 0) return []
 
@@ -76,8 +81,17 @@ export default class AfcMixin extends Vue {
         return mapList.sort()
     }
 
+    // Alias used by newer AFC components
+    get mapList() {
+        return this.afcMapList
+    }
+
     get afcExistsSpoolman() {
         return this.$store.state.server.components.includes('spoolman')
+    }
+
+    get spoolManagerUrl() {
+        return this.$store.state.server.config.config?.spoolman?.server ?? null
     }
 
     get afcShowFilamentName(): boolean {
