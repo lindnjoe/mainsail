@@ -188,7 +188,9 @@ import { Lane } from '@/store/server/afc/types'
     components: { AfcChangeSpoolDialogRow, Panel },
 })
 export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
-    @Prop({ type: Object, required: true }) laneData!: Lane
+
+    @Prop({ type: Object, required: true }) laneData!: Lane;
+
     mdiAdjust = mdiAdjust
     mdiCloseThick = mdiCloseThick
     mdiDatabase = mdiDatabase
@@ -201,7 +203,9 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     spoolColor = '#ffffff'
     unloadSpool = false
 
-    @Prop({ required: true }) declare readonly showDialog: boolean
+
+    @Prop({ required: true }) declare readonly showDialog: boolean;
+
 
     search = ''
 
@@ -263,6 +267,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
         const lane = this.lanesData.find((lane) => lane.spool_id === spoolId.toString())
         return lane ? lane.lane : -1
+    }
 
 
     updateSpool() {
