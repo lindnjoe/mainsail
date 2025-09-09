@@ -34,8 +34,8 @@
                                                 color: filamentTextColor(fileColor),
                                                 fontSize: '1.1em',
 
-                                                minWidth: '60px',
-                                                maxWidth: '60px',
+                                                minWidth: '50px',
+                                                maxWidth: '50px',
 
                                             }">
                                             {{ fileWeight }}
@@ -61,8 +61,8 @@
                                                 color: filamentTextColor(spoolColor),
                                                 fontSize: '1.1em',
 
-                                                minWidth: '60px',
-                                                maxWidth: '60px',
+                                                minWidth: '50px',
+                                                maxWidth: '50px',
 
                                             }">
                                             {{ spoolWeight }}
@@ -238,8 +238,7 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.material) {
             material = this.spoolmanSpool.filament.material
         } else {
-
-            material = this.lane.material ?? ''
+        material = this.lane.material ?? ''
 
         }
 
@@ -329,23 +328,25 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 
 .lane-details {
     display: flex;
-    justify-content: space-between;
+
     align-items: center;
     flex: 1;
     cursor: pointer;
+    gap: 8px;
+
 }
 
 .filament-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 60px;
+
+    min-width: 50px;
 }
 
 .filament-type {
-
-    max-width: 80px;
-    min-width: 80px;
+    max-width: 60px;
+    min-width: 60px;
 
     white-space: nowrap;
     overflow: hidden;
@@ -354,9 +355,11 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 }
 
 .match-status {
-    margin-left: 10px;
+
+    margin-left: 6px;
     max-width: 20px;
-    flex: 1;
+    flex: 0 0 20px;
+
 }
 
 .disabled {

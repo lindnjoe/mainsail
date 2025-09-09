@@ -262,6 +262,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     checkLoadedSpool(spoolId: number): number {
 
         const lane = this.lanesData.find((lane) => lane.spool_id === spoolId.toString())
+        return lane ? lane.lane : -1
 
     }
 
