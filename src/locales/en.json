@@ -626,7 +626,7 @@
             "FilamentWeightMismatch": "The following tools may not have enough filament for this print: ({lanes})",
             "File": "File",
             "Functions": "Functions",
-            "Headline": "Automated Filament Changer",
+            "Headline": "AFC - Automated Filament Changer",
             "Hub": "Hub",
             "HubLoad": "Hub Load",
             "Idle": "Idle",
