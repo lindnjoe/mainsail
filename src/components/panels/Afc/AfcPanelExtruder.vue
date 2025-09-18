@@ -138,10 +138,78 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get bufferOutput() {
-        const extruder = this.afcCurrentLane?.extruder ?? ''
-        if (extruder !== this.name) return this.$t('Panels.AfcPanel.BufferDisabled')
+        if (!this.isActiveExtruder) return this.$t('Panels.AfcPanel.BufferDisabled')
+
+        if (this.currentFpsOutput) return this.currentFpsOutput
 
         return `${this.afcCurrentLane?.buffer ?? '--'}: ${this.afcCurrentBuffer?.state ?? '--'}`
+    }
+
+    get isActiveExtruder() {
+        const extruder = this.afcCurrentLane?.extruder ?? ''
+
+        return extruder === this.name
+    }
+
+    get isCurrentLaneAms() {
+        if (!this.isActiveExtruder) return false
+
+        const unitName = this.afcCurrentLane?.unit ?? ''
+        if (!unitName) return false
+
+        const unit = this.getAfcUnitObject(unitName)
+        const unitType = (unit?.type ?? '').toString().toUpperCase()
+
+        return unitType === 'AMS'
+    }
+
+    get currentFpsKey(): string | null {
+        if (!this.isCurrentLaneAms) return null
+
+        const printerState = (this.$store.state.printer ?? {}) as Record<string, unknown>
+        const oamsManager = printerState['oams_manager'] as Record<string, unknown> | undefined
+        if (!oamsManager) return null
+
+        const laneMapRaw = this.afcCurrentLane?.map
+        if (!laneMapRaw) return null
+
+        const laneMap = laneMapRaw.toString().toUpperCase()
+        const entries = Object.entries(oamsManager)
+
+        for (const [key, value] of entries) {
+            if (key === 'oams') continue
+            if (!value || typeof value !== 'object') continue
+
+            const currentGroup = (value as Record<string, unknown>)['current_group']
+            if (typeof currentGroup !== 'string') continue
+
+            if (currentGroup.toUpperCase() === laneMap) return key
+        }
+
+        return null
+    }
+
+    get currentFpsValue(): number | null {
+        const fpsKey = this.currentFpsKey
+        if (!fpsKey) return null
+
+        const printerState = (this.$store.state.printer ?? {}) as Record<string, unknown>
+        const fpsObject = printerState[fpsKey] as Record<string, unknown> | undefined
+        if (!fpsObject) return null
+
+        const rawValue = (fpsObject as Record<string, unknown>)['fps_value']
+        const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+
+        if (!Number.isFinite(value)) return null
+
+        return value
+    }
+
+    get currentFpsOutput() {
+        const value = this.currentFpsValue
+        if (typeof value !== 'number') return null
+
+        return `FPS: ${value.toFixed(2)}`
     }
 
     get state() {
