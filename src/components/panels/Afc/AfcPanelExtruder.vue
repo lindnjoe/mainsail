@@ -138,10 +138,113 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get bufferOutput() {
-        const extruder = this.afcCurrentLane?.extruder ?? ''
-        if (extruder !== this.name) return this.$t('Panels.AfcPanel.BufferDisabled')
+        if (!this.isActiveExtruder) return this.$t('Panels.AfcPanel.BufferDisabled')
+
+        if (this.currentFpsOutput) return this.currentFpsOutput
 
         return `${this.afcCurrentLane?.buffer ?? '--'}: ${this.afcCurrentBuffer?.state ?? '--'}`
+    }
+
+    get isActiveExtruder() {
+        const extruder = this.afcCurrentLane?.extruder ?? ''
+
+        return extruder === this.name
+    }
+
+    get isCurrentLaneAms() {
+        if (!this.isActiveExtruder) return false
+
+        const unitName = this.afcCurrentLane?.unit ?? ''
+        if (!unitName) return false
+
+        const unit = this.getAfcUnitObject(unitName)
+        const unitType = (unit?.type ?? '').toString().toUpperCase()
+
+        return unitType === 'AMS'
+    }
+
+    get printerStateObject() {
+        return (this.$store.state.printer ?? {}) as Record<string, unknown>
+    }
+
+    get oamsManagerStatus(): Record<string, unknown> | null {
+        const manager = this.printerStateObject['oams_manager']
+        if (!manager || typeof manager !== 'object') return null
+
+        return manager as Record<string, unknown>
+    }
+
+    get currentFpsStatus(): Record<string, unknown> | null {
+        if (!this.isCurrentLaneAms) return null
+
+        const laneMapRaw = this.afcCurrentLane?.map
+        if (!laneMapRaw) return null
+
+        const laneMap = laneMapRaw.toString().toUpperCase()
+        const oamsManager = this.oamsManagerStatus
+        if (!oamsManager) return null
+
+        for (const [key, value] of Object.entries(oamsManager)) {
+            if (key === 'oams') continue
+            if (!value || typeof value !== 'object') continue
+
+            const currentGroup = (value as Record<string, unknown>)['current_group']
+            if (typeof currentGroup !== 'string') continue
+
+            if (currentGroup.toUpperCase() === laneMap) return value as Record<string, unknown>
+        }
+
+        return null
+    }
+
+    get currentOamsName(): string | null {
+        const status = this.currentFpsStatus
+        if (!status) return null
+
+        const name = status['current_oams']
+        if (typeof name !== 'string' || !name.trim()) return null
+
+        return name
+    }
+
+    get currentOamsStatus(): Record<string, unknown> | null {
+        const oamsName = this.currentOamsName
+        if (!oamsName) return null
+
+        const possibleKeys = new Set<string>([
+            oamsName,
+            `oams ${oamsName}`,
+            `oams ${oamsName.toLowerCase()}`,
+            `oams ${oamsName.toUpperCase()}`,
+        ])
+
+        for (const key of possibleKeys) {
+            const candidate = this.printerStateObject[key]
+            if (!candidate || typeof candidate !== 'object') continue
+
+            return candidate as Record<string, unknown>
+        }
+
+        return null
+    }
+
+    get currentFpsValue(): number | null {
+        const oamsStatus = this.currentOamsStatus
+        if (!oamsStatus) return null
+
+        const rawValue = oamsStatus['fps_value']
+        const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+
+        if (!Number.isFinite(value)) return null
+
+        return value
+    }
+
+    get currentFpsOutput() {
+        const value = this.currentFpsValue
+        if (typeof value !== 'number') return null
+
+        return `fps_value: ${value.toFixed(2)}`
     }
 
     get state() {
