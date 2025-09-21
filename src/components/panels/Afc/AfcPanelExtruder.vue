@@ -138,184 +138,151 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get bufferOutput() {
-        if (!this.isActiveExtruder) return this.$t('Panels.AfcPanel.BufferDisabled')
 
-        if (this.currentFpsOutput) return this.currentFpsOutput
+        if (this.isActiveExtruder) {
+            const amsOutput = this.activeAmsFpsOutput
+            if (amsOutput) return amsOutput
+        }
+
+        const extruder = this.afcCurrentLane?.extruder ?? ''
+        if (extruder !== this.name) return this.$t('Panels.AfcPanel.BufferDisabled')
+
 
         return `${this.afcCurrentLane?.buffer ?? '--'}: ${this.afcCurrentBuffer?.state ?? '--'}`
     }
 
+
+    get normalizedExtruderName(): string | null {
+        return this.normalizeExtruderName(this.name)
+    }
+
+    normalizeExtruderName(value: unknown): string | null {
+        if (typeof value !== 'string') return null
+
+        const trimmed = value.trim()
+        if (!trimmed) return null
+
+        return trimmed.replace(/\s+/g, '').toUpperCase()
+    }
+
+    get normalizedActiveToolheadExtruder(): string | null {
+        const active = this.$store.state.printer?.toolhead?.extruder
+        return this.normalizeExtruderName(active)
+    }
+
     get isActiveExtruder() {
-        const extruder = this.afcCurrentLane?.extruder ?? ''
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return false
 
-        return extruder === this.name
+        if (this.normalizeExtruderName(this.afcCurrentLane?.extruder) === normalized) return true
+
+        return this.normalizedActiveToolheadExtruder === normalized
     }
 
-    get isCurrentLaneAms() {
-        if (!this.isActiveExtruder) return false
-
-        const unitNameRaw = this.afcCurrentLane?.unit ?? ''
-        const unitName = unitNameRaw ? unitNameRaw.toString().trim() : ''
-        if (!unitName) return false
-
-        const nameIndicatesAms = unitName.toUpperCase().includes('AMS')
-        if (nameIndicatesAms) return true
-
-        const unit = this.getAfcUnitObject(unitName)
-        const unitType = (unit?.type ?? '').toString().toUpperCase()
-
-        return unitType === 'AMS'
-    }
-
-    get printerStateObject() {
+    get printerStateObject(): Record<string, unknown> {
         return (this.$store.state.printer ?? {}) as Record<string, unknown>
     }
 
-    get oamsManagerStatus(): Record<string, unknown> | null {
-        const manager = this.printerStateObject['oams_manager']
-        if (!manager || typeof manager !== 'object') return null
-
-        return manager as Record<string, unknown>
+    get printerSettingsObject(): Record<string, unknown> {
+        return (this.$store.state.printer?.configfile?.settings ?? {}) as Record<string, unknown>
     }
 
-    normalizeGroupName(rawGroup: unknown): string | null {
-        if (typeof rawGroup !== 'string') return null
+    get amsAssignments(): Record<string, unknown>[] {
+        const assignments: Record<string, unknown>[] = []
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return assignments
 
-        const normalized = rawGroup.trim().toUpperCase()
-
-        return normalized || null
-    }
-
-    normalizeOamsName(rawName: unknown): string | null {
-        if (typeof rawName !== 'string') return null
-
-        const trimmed = rawName.trim()
-        if (!trimmed) return null
-
-        return trimmed
-    }
-
-    extractGroupFromKey(rawKey: string): string | null {
-        const key = rawKey.trim()
-        if (!key) return null
-
-        const segments = key.split(/\s+/)
-        const suffix = segments[segments.length - 1]
-
-        return this.normalizeGroupName(suffix)
-    }
-
-    resolveOamsStatusKeys(rawName: string): string[] {
-        const keys = new Set<string>()
-        const base = this.normalizeOamsName(rawName)
-        if (!base) return []
-
-        const normalizedBase = base.trim()
-        const normalizedLower = normalizedBase.toLowerCase()
-        const normalizedUpper = normalizedBase.toUpperCase()
-
-        keys.add(normalizedBase)
-        keys.add(normalizedLower)
-        keys.add(normalizedUpper)
-
-        const suffix = normalizedBase.replace(/^oams\s+/i, '').trim()
-        if (suffix) {
-            const suffixLower = suffix.toLowerCase()
-            const suffixUpper = suffix.toUpperCase()
-
-            keys.add(suffix)
-            keys.add(suffixLower)
-            keys.add(suffixUpper)
-            keys.add(`oams ${suffix}`)
-            keys.add(`oams ${suffixLower}`)
-            keys.add(`oams ${suffixUpper}`)
-            keys.add(`OAMS ${suffix}`)
-            keys.add(`OAMS ${suffixLower}`)
-            keys.add(`OAMS ${suffixUpper}`)
-        }
-
-        return Array.from(keys)
-    }
-
-    get currentFpsStatus(): Record<string, unknown> | null {
-        if (!this.isCurrentLaneAms) return null
-
-        const laneMapRaw = this.afcCurrentLane?.map
-        if (!laneMapRaw) return null
-
-        const laneMap = this.normalizeGroupName(laneMapRaw)
-        if (!laneMap) return null
-        const oamsManager = this.oamsManagerStatus
-        if (!oamsManager) return null
-
-        let fallbackStatus: Record<string, unknown> | null = null
-
-        for (const [key, value] of Object.entries(oamsManager)) {
-            if (key === 'oams') continue
+        for (const [key, value] of Object.entries(this.printerStateObject)) {
+            if (!/^AFC_AMS\s+/i.test(key)) continue
             if (!value || typeof value !== 'object') continue
 
-            const currentGroup = this.normalizeGroupName((value as Record<string, unknown>)['current_group'])
-            if (laneMap && currentGroup && currentGroup === laneMap) return value as Record<string, unknown>
+            const record = value as Record<string, unknown>
+            const candidates = [record['extruder'], record['extruder_name']]
 
-            const keyGroup = this.extractGroupFromKey(key)
-            if (!fallbackStatus && laneMap && keyGroup === laneMap) {
-                fallbackStatus = value as Record<string, unknown>
+            if (candidates.some((candidate) => this.normalizeExtruderName(candidate) === normalized)) {
+                assignments.push(record)
             }
         }
 
-        return fallbackStatus
+        return assignments
     }
 
-    get currentOamsName(): string | null {
-        const status = this.currentFpsStatus
-        if (!status) return null
+    get isAmsExtruder() {
+        if (this.amsAssignments.length > 0) return true
 
-        const name = status['current_oams']
-        if (typeof name !== 'string') return null
-
-        const normalized = this.normalizeOamsName(name)
-
-        return normalized
+        return this.extruderFpsConfigKeys.length > 0
     }
 
-    get currentOamsStatus(): Record<string, unknown> | null {
-        const oamsName = this.currentOamsName
-        if (!oamsName) return null
+    get extruderFpsConfigKeys(): string[] {
+        const keys: string[] = []
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return keys
 
-        const keys = this.resolveOamsStatusKeys(oamsName)
+        for (const [key, value] of Object.entries(this.printerSettingsObject)) {
+            if (!/^fps\s+/i.test(key)) continue
+            if (!value || typeof value !== 'object') continue
 
-        for (const key of keys) {
-            const candidate = this.printerStateObject[key]
+            const record = value as Record<string, unknown>
+            const candidate = this.normalizeExtruderName(record['extruder'])
+            if (candidate && candidate === normalized) keys.push(key)
+        }
+
+        return keys
+    }
+
+    get extruderFpsStatusRecords(): Record<string, unknown>[] {
+        const records: Record<string, unknown>[] = []
+
+        for (const key of this.extruderFpsConfigKeys) {
+            const candidate = this.getPrinterObject(key)
             if (!candidate || typeof candidate !== 'object') continue
 
-            return candidate as Record<string, unknown>
+            records.push(candidate as Record<string, unknown>)
+        }
+
+        return records
+    }
+
+    readFpsValue(record: Record<string, unknown> | null): number | null {
+        if (!record) return null
+
+        const rawValue = record['fps_value']
+        if (typeof rawValue === 'number') return Number.isFinite(rawValue) ? rawValue : null
+
+        if (typeof rawValue === 'string') {
+            const trimmed = rawValue.trim()
+            if (!trimmed) return null
+
+            const parsed = Number(trimmed)
+            return Number.isFinite(parsed) ? parsed : null
+
         }
 
         return null
     }
 
-    get currentFpsValue(): number | null {
-        const oamsStatus = this.currentOamsStatus
-        if (!oamsStatus) return null
 
-        const rawValue = oamsStatus['fps_value']
-        const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+    get activeAmsFpsValue(): number | null {
+        if (!this.isActiveExtruder || !this.isAmsExtruder) return null
 
-        if (!Number.isFinite(value)) return null
+        for (const record of this.extruderFpsStatusRecords) {
+            const value = this.readFpsValue(record)
+            if (typeof value === 'number') return value
+        }
 
-        return value
+        return null
     }
 
-    get currentFpsOutput() {
-        const value = this.currentFpsValue
+    get activeAmsFpsOutput(): string | null {
+        const value = this.activeAmsFpsValue
+
         if (typeof value !== 'number') return null
 
         return `fps_value: ${value.toFixed(2)}`
     }
 
     get state() {
-        const extruder = this.afcCurrentLane?.extruder ?? ''
-        if (extruder === this.name) {
+        if (this.isActiveExtruder) {
             if (this.printerIsPrintingOnly) return this.$t('Panels.AfcPanel.Printing')
 
             return this.$t(`Panels.AfcPanel.${this.afcCurrentState}`)
