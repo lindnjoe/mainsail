@@ -168,12 +168,16 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         return this.afcLane
     }
 
-    get currentLaneSpoolId(): number {
+
+    get currentLaneSpoolId(): number | null {
         const lane = this.afcLaneObjectData as { spool_id?: string | number } | null
-        if (!lane || lane.spool_id === undefined || lane.spool_id === null) return 0
+        if (!lane || lane.spool_id === undefined || lane.spool_id === null || lane.spool_id === '') return null
 
         const spoolId = Number(lane.spool_id)
-        return Number.isNaN(spoolId) ? 0 : spoolId
+        if (Number.isNaN(spoolId) || spoolId <= 0) return null
+
+        return spoolId
+
     }
 
     openSpoolManager() {
@@ -224,6 +228,11 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
     setSpool(spool: ServerSpoolmanStateSpool) {
         // if afcLane is set, execute SET_SPOOL_ID and close, because it's not an active printing spool change
         if (this.afcLane) {
+            const previousSpoolId = this.currentLaneSpoolId
+            if (previousSpoolId !== null && previousSpoolId !== spool.id) {
+                this.updateLoadedLaneExtra(previousSpoolId, null)
+            }
+
             this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=${spool.id}`)
             this.updateLoadedLaneExtra(spool.id, this.laneNameForExtra)
             this.close()
@@ -260,7 +269,9 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         if (!this.spoolManagerUrl) return
 
         const numericSpoolId = Number(spoolId)
-        if (!numericSpoolId || Number.isNaN(numericSpoolId)) return
+
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
 
         this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
             spoolId: numericSpoolId,
@@ -274,8 +285,15 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
     }
 
     ejectSpool() {
+        const currentSpoolId = this.currentLaneSpoolId
+
         this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=`)
-        this.updateLoadedLaneExtra(this.currentLaneSpoolId, null)
+
+
+        if (currentSpoolId !== null) {
+            this.updateLoadedLaneExtra(currentSpoolId, null)
+        }
+
         this.close()
     }
 
