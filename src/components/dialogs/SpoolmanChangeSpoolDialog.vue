@@ -75,6 +75,7 @@
 import Component from 'vue-class-component'
 import { Mixins, Prop, Watch } from 'vue-property-decorator'
 import BaseMixin from '@/components/mixins/base'
+import AfcMixin from '@/components/mixins/afc'
 import Panel from '@/components/ui/Panel.vue'
 import { mdiCloseThick, mdiAdjust, mdiDatabase, mdiMagnify, mdiRefresh, mdiEject } from '@mdi/js'
 import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
@@ -82,7 +83,7 @@ import SpoolmanChangeSpoolDialogRow from '@/components/dialogs/SpoolmanChangeSpo
 @Component({
     components: { SpoolmanChangeSpoolDialogRow, Panel },
 })
-export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
+export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     mdiAdjust = mdiAdjust
     mdiCloseThick = mdiCloseThick
     mdiDatabase = mdiDatabase
@@ -150,6 +151,33 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
         return 'save_variables' in settings
     }
 
+    get afcLaneObjectData() {
+        if (!this.afcLane) return null
+
+        return this.getAfcLaneObject(this.afcLane)
+    }
+
+    get laneNameForExtra(): string | null {
+        if (!this.afcLane) return null
+
+        const lane = this.afcLaneObjectData as { name?: string } | null
+        const laneName = lane?.name
+
+        if (laneName && laneName.length > 0) return laneName
+
+        return this.afcLane
+    }
+
+    get currentLaneSpoolId(): number | null {
+        const lane = this.afcLaneObjectData as { spool_id?: string | number } | null
+        if (!lane || lane.spool_id === undefined || lane.spool_id === null || lane.spool_id === '') return null
+
+        const spoolId = Number(lane.spool_id)
+        if (Number.isNaN(spoolId) || spoolId <= 0) return null
+
+        return spoolId
+    }
+
     openSpoolManager() {
         window.open(this.spoolManagerUrl, '_blank')
     }
@@ -198,7 +226,13 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
     setSpool(spool: ServerSpoolmanStateSpool) {
         // if afcLane is set, execute SET_SPOOL_ID and close, because it's not an active printing spool change
         if (this.afcLane) {
+            const previousSpoolId = this.currentLaneSpoolId
+            if (previousSpoolId !== null && previousSpoolId !== spool.id) {
+                this.updateLoadedLaneExtra(previousSpoolId, null)
+            }
+
             this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=${spool.id}`)
+            this.updateLoadedLaneExtra(spool.id, this.laneNameForExtra)
             this.close()
             return
         }
@@ -229,13 +263,31 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
         this.sendGcode(`SAVE_VARIABLE VARIABLE=${this.tool?.toLowerCase()}__spool_id VALUE=${spool.id}`)
     }
 
+    updateLoadedLaneExtra(spoolId: number, laneName: string | null) {
+        if (!this.spoolManagerUrl) return
+
+        const numericSpoolId = Number(spoolId)
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
+        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
+            spoolId: numericSpoolId,
+            laneName,
+        })
+    }
+
     sendGcode(gcode: string) {
         this.$store.dispatch('server/addEvent', { message: gcode, type: 'command' })
         this.$socket.emit('printer.gcode.script', { script: gcode })
     }
 
     ejectSpool() {
+        const currentSpoolId = this.currentLaneSpoolId
+
         this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=`)
+
+        if (currentSpoolId !== null) {
+            this.updateLoadedLaneExtra(currentSpoolId, null)
+        }
         this.close()
     }
 
