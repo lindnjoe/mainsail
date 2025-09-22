@@ -183,8 +183,9 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
             },
             {
                 action: 'server/spoolman/handleUpdateLoadedLaneExtra',
+
                 actionPayload: { spoolId },
-            }
+
         )
 
         dispatch('socket/addLoading', 'updateLoadedLaneExtra', { root: true })
