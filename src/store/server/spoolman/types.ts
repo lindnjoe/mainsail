@@ -49,4 +49,5 @@ export interface ServerSpoolmanStateSpool {
     used_weight: number
     location?: string
     comment?: string
+    extra?: Record<string, string>
 }

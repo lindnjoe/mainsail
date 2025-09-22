@@ -270,6 +270,17 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     }
 
 
+    get currentLaneSpoolId(): number | null {
+        const laneSpoolId = this.laneData?.spool_id
+        if (laneSpoolId === undefined || laneSpoolId === null || laneSpoolId === '') return null
+
+        const numericSpoolId = Number(laneSpoolId)
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return null
+
+        return numericSpoolId
+    }
+
+
     updateSpool() {
         console.log('Updating spool with the following data:')
         console.log('Filament Type:', this.filamentType)
@@ -367,6 +378,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
     clearSpoolmanSpool() {
         if (this.laneData != null) {
+            const currentSpoolId = this.currentLaneSpoolId
             const ejectSpoolman = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=`
 
             this.$nextTick(async () => {
@@ -386,6 +398,9 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
                 this.manualyClearSpool()
             }
 
+            if (currentSpoolId !== null) {
+                this.updateLoadedLaneExtra(currentSpoolId, null)
+            }
             this.unloadSpool = false
         }
     }
@@ -422,6 +437,11 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     setSpool(spool: any) {
         const gcode = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=${spool.id}`
 
+        const previousSpoolId = this.currentLaneSpoolId
+        if (previousSpoolId !== null && previousSpoolId !== Number(spool.id)) {
+            this.updateLoadedLaneExtra(previousSpoolId, null)
+        }
+
         this.$nextTick(async () => {
             try {
                 this.$socket.emit('printer.gcode.script', { script: gcode }, { loading: 'macro_' + gcode })
@@ -429,7 +449,21 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
                 console.error('Failed to send G-code:', error)
             }
         })
+
+        this.updateLoadedLaneExtra(spool.id, this.laneData?.name ?? null)
         this.close()
+    }
+
+    updateLoadedLaneExtra(spoolId: number, laneName: string | null) {
+        if (!this.spoolManagerUrl) return
+
+        const numericSpoolId = Number(spoolId)
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
+        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
+            spoolId: numericSpoolId,
+            laneName,
+        })
     }
 
     initializeFields() {
