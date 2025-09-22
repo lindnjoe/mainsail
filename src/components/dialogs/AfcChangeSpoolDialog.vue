@@ -378,7 +378,9 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
     clearSpoolmanSpool() {
         if (this.laneData != null) {
+
             const currentSpoolId = this.currentLaneSpoolId
+
             const ejectSpoolman = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=`
 
             this.$nextTick(async () => {
@@ -398,9 +400,11 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
                 this.manualyClearSpool()
             }
 
+
             if (currentSpoolId !== null) {
                 this.updateLoadedLaneExtra(currentSpoolId, null)
             }
+
             this.unloadSpool = false
         }
     }
@@ -458,7 +462,9 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
         if (!this.spoolManagerUrl) return
 
         const numericSpoolId = Number(spoolId)
+
         if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
 
         this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
             spoolId: numericSpoolId,
