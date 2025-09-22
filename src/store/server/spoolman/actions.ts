@@ -168,8 +168,10 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
 
         const laneValue = payload.laneName === null ? '' : String(payload.laneName)
 
+
         const extraPayload: Record<string, string> = {}
         extraPayload[SPOOLMAN_LOADED_LANE_EXTRA_FIELD] = laneValue
+
 
         Vue.$socket.emit(
             'server.spoolman.proxy',
@@ -177,6 +179,7 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
                 request_method: 'PATCH',
                 path: `/v1/spool/${spoolId}`,
                 use_v2_response: true,
+
                 body: JSON.stringify({
                     extra: extraPayload,
                 }),
@@ -185,6 +188,7 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
                 action: 'server/spoolman/handleUpdateLoadedLaneExtra',
                 actionPayload: { spoolId },
             }
+
         )
 
         dispatch('socket/addLoading', 'updateLoadedLaneExtra', { root: true })
