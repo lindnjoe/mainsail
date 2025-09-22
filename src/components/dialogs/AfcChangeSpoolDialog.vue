@@ -367,6 +367,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
     clearSpoolmanSpool() {
         if (this.laneData != null) {
+            const currentSpoolId = Number(this.laneData.spool_id || '0')
             const ejectSpoolman = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=`
 
             this.$nextTick(async () => {
@@ -386,6 +387,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
                 this.manualyClearSpool()
             }
 
+            this.updateLoadedLaneExtra(currentSpoolId, null)
             this.unloadSpool = false
         }
     }
@@ -429,7 +431,21 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
                 console.error('Failed to send G-code:', error)
             }
         })
+
+        this.updateLoadedLaneExtra(spool.id, this.laneData?.name ?? null)
         this.close()
+    }
+
+    updateLoadedLaneExtra(spoolId: number, laneName: string | null) {
+        if (!this.spoolManagerUrl) return
+
+        const numericSpoolId = Number(spoolId)
+        if (!numericSpoolId || Number.isNaN(numericSpoolId)) return
+
+        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
+            spoolId: numericSpoolId,
+            laneName,
+        })
     }
 
     initializeFields() {
