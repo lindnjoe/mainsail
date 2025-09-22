@@ -166,11 +166,11 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
         const spoolId = Number(payload.spoolId)
         if (!spoolId || Number.isNaN(spoolId)) return
 
-        const laneValue = payload.laneName === null ? '' : String(payload.laneName)
 
+        const laneValue = payload.laneName === null ? null : String(payload.laneName)
 
         const extraPayload: Record<string, string> = {}
-        extraPayload[SPOOLMAN_LOADED_LANE_EXTRA_FIELD] = laneValue
+        extraPayload[SPOOLMAN_LOADED_LANE_EXTRA_FIELD] = JSON.stringify(laneValue)
 
 
         Vue.$socket.emit(
