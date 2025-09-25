@@ -1,7 +1,21 @@
 import Vue from 'vue'
 import { ActionTree } from 'vuex'
 import { RootState } from '@/store/types'
-import { ServerSpoolmanState } from '@/store/server/spoolman/types'
+import { ServerSpoolmanState, ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
+import { SPOOLMAN_LOADED_LANE_EXTRA_FIELD } from '@/store/server/spoolman/constants'
+
+function parseLoadedLaneExtra(value?: string): string | null {
+    if (typeof value !== 'string') return null
+
+    try {
+        const parsed = JSON.parse(value)
+        if (typeof parsed === 'string') return parsed
+    } catch {
+        // ignore JSON parse errors and fall back to raw value
+    }
+
+    return value
+}
 
 function convertV2response(payload: { error?: { message: string } | null; response: any }) {
     if ((payload.error?.message ?? null) !== null) {
@@ -159,5 +173,75 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
             },
             { action: 'server/spoolman/getActiveSpool' }
         )
+    },
+
+    updateLoadedLaneExtra({ dispatch, rootState }, payload: { spoolId: number; laneName: string | null }) {
+        const spoolId = Number(payload.spoolId)
+        if (!spoolId || Number.isNaN(spoolId)) return
+
+        const sendLoadedLaneUpdate = (targetSpoolId: number, laneName: string | null) => {
+            const numericTargetId = Number(targetSpoolId)
+            if (!numericTargetId || Number.isNaN(numericTargetId)) return
+
+            const laneValue = laneName === null ? '' : String(laneName)
+
+            const extraPayload: Record<string, string> = {}
+            extraPayload[SPOOLMAN_LOADED_LANE_EXTRA_FIELD] = JSON.stringify(laneValue)
+
+            Vue.$socket.emit(
+                'server.spoolman.proxy',
+                {
+                    request_method: 'PATCH',
+                    path: `/v1/spool/${numericTargetId}`,
+                    use_v2_response: true,
+                    body: JSON.stringify({
+                        extra: extraPayload,
+                    }),
+                },
+                {
+                    action: 'server/spoolman/handleUpdateLoadedLaneExtra',
+                    actionPayload: { spoolId: numericTargetId },
+                }
+            )
+
+            dispatch('socket/addLoading', 'updateLoadedLaneExtra', { root: true })
+        }
+
+        if (payload.laneName !== null) {
+            const assignedLane = String(payload.laneName)
+            const spoolmanState = (rootState.server as any)?.spoolman as
+                | { spools?: ServerSpoolmanStateSpool[] }
+                | undefined
+            const spools = spoolmanState?.spools ?? []
+
+            const duplicateSpoolIds = new Set<number>()
+
+            spools.forEach((spool) => {
+                if (spool.id === spoolId) return
+
+                const loadedLane = parseLoadedLaneExtra(
+                    spool.extra?.[SPOOLMAN_LOADED_LANE_EXTRA_FIELD]
+                )
+
+                if (loadedLane === assignedLane) duplicateSpoolIds.add(spool.id)
+            })
+
+            duplicateSpoolIds.forEach((duplicateSpoolId) => {
+                sendLoadedLaneUpdate(duplicateSpoolId, null)
+            })
+        }
+
+        sendLoadedLaneUpdate(spoolId, payload.laneName)
+    },
+
+    handleUpdateLoadedLaneExtra({ dispatch }, payload) {
+        dispatch('socket/removeLoading', 'updateLoadedLaneExtra', { root: true })
+
+        if ('requestParams' in payload) delete payload.requestParams
+
+        payload = convertV2response(payload)
+        if (payload === null) return
+
+        dispatch('refreshSpools')
     },
 }
