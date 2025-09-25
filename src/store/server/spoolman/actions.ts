@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import { ActionTree } from 'vuex'
 import { RootState } from '@/store/types'
+
 import { ServerSpoolmanState, ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
 import { SPOOLMAN_LOADED_LANE_EXTRA_FIELD } from '@/store/server/spoolman/constants'
 
@@ -16,6 +17,7 @@ function parseLoadedLaneExtra(value?: string): string | null {
 
     return value
 }
+
 
 function convertV2response(payload: { error?: { message: string } | null; response: any }) {
     if ((payload.error?.message ?? null) !== null) {
@@ -175,6 +177,7 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
         )
     },
 
+
     updateLoadedLaneExtra({ dispatch, rootState }, payload: { spoolId: number; laneName: string | null }) {
         const spoolId = Number(payload.spoolId)
         if (!spoolId || Number.isNaN(spoolId)) return
@@ -232,6 +235,7 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
         }
 
         sendLoadedLaneUpdate(spoolId, payload.laneName)
+
     },
 
     handleUpdateLoadedLaneExtra({ dispatch }, payload) {
