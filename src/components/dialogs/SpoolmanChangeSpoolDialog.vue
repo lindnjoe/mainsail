@@ -168,6 +168,7 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         return this.afcLane
     }
 
+
     get currentLaneSpoolId(): number | null {
         const lane = this.afcLaneObjectData as { spool_id?: string | number } | null
         if (!lane || lane.spool_id === undefined || lane.spool_id === null || lane.spool_id === '') return null
@@ -176,6 +177,7 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         if (Number.isNaN(spoolId) || spoolId <= 0) return null
 
         return spoolId
+
     }
 
     openSpoolManager() {
@@ -267,7 +269,9 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         if (!this.spoolManagerUrl) return
 
         const numericSpoolId = Number(spoolId)
+
         if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
 
         this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
             spoolId: numericSpoolId,
@@ -285,9 +289,11 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
 
         this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=`)
 
+
         if (currentSpoolId !== null) {
             this.updateLoadedLaneExtra(currentSpoolId, null)
         }
+
         this.close()
     }
 
