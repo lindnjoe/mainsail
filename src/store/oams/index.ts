@@ -1,15 +1,22 @@
 import { Module } from 'vuex'
 import { RootState } from '@/store/types'
 
+type PauseEventParams = {
+    event_id: string
+    message: string
+    reason?: string
+    requires_ack?: boolean
+    [key: string]: any
+}
+
 export type PauseEvent = {
     method: string
-    params: {
-        event_id: string
-        message: string
-        reason?: string
-        requires_ack?: boolean
-        [key: string]: any
-    }
+    params: PauseEventParams
+}
+
+type PauseEventPayload = {
+    method?: string
+    params?: PauseEventParams | PauseEventParams[] | null
 }
 
 export type OamsState = {
@@ -19,6 +26,21 @@ export type OamsState = {
 
 const getNextActiveId = (pending: Record<string, PauseEvent>): string | null => {
     return Object.keys(pending)[0] ?? null
+}
+
+const normalizePauseEvent = (payload: PauseEventPayload): PauseEvent | null => {
+    if (!payload?.method) return null
+
+    const params = Array.isArray(payload.params) ? payload.params[0] : payload.params
+    if (!params || typeof params !== 'object') return null
+
+    const eventId = (params as PauseEventParams).event_id
+    if (!eventId) return null
+
+    return {
+        method: payload.method,
+        params: params as PauseEventParams,
+    }
 }
 
 export const oams: Module<OamsState, RootState> = {
@@ -68,9 +90,10 @@ export const oams: Module<OamsState, RootState> = {
         },
     },
     actions: {
-        handleRemoteEvent({ commit }, remote: PauseEvent) {
-            if (remote.method === 'oams.pause_event') {
-                commit('enqueue', remote)
+        handleRemoteEvent({ commit }, remote: PauseEventPayload) {
+            const pauseEvent = normalizePauseEvent(remote)
+            if (pauseEvent?.method === 'oams.pause_event') {
+                commit('enqueue', pauseEvent)
             }
         },
     },
