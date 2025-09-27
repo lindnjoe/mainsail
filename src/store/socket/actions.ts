@@ -116,9 +116,9 @@ export const actions: ActionTree<SocketState, RootState> = {
                 break
 
             case 'notify_remote_method': {
-                const remote = payload.params?.[0]
-                if (remote?.method?.startsWith('oams.')) {
-                    dispatch('oams/handleRemoteEvent', remote, { root: true })
+                const remoteParams = Array.isArray(payload.params) ? payload.params[0] : payload.params
+                if (remoteParams?.method?.startsWith?.('oams.')) {
+                    dispatch('oams/handleRemoteEvent', remoteParams, { root: true })
                 }
                 break
             }
