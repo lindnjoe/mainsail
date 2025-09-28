@@ -209,7 +209,9 @@ export default class OpenAmsPanel extends Mixins(BaseMixin) {
     formatTimestamp(timestamp: number): string {
         if (!timestamp) return this.placeholder
         try {
+
             const date = new Date(timestamp >= 1e12 ? timestamp : timestamp * 1000)
+
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
         } catch (e) {
             return this.placeholder
