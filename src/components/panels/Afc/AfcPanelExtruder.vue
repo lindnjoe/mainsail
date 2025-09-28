@@ -292,9 +292,8 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get stateLane() {
-        const laneLoaded = this.afcExtruder.lane_loaded
-        if (laneLoaded) return laneLoaded
-        if (this.isActiveExtruder && this.afcCurrentLane) return this.afcCurrentLane.name
+        if (this.afcExtruder.lane_loaded) return this.afcExtruder.lane_loaded
+        if (this.afcCurrentLane) return this.afcCurrentLane.name
 
         return this.$t('Panels.AfcPanel.LaneLoadedNone')
     }
