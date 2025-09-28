@@ -11,6 +11,7 @@ import {
     PrinterStateMcu,
     PrinterStateMacro,
     PrinterGetterObject,
+    PrinterStateLight,
 } from '@/store/printer/types'
 import { caseInsensitiveSort, formatFrequency, getMacroParams } from '@/plugins/helpers'
 import { RootState } from '@/store/types'

@@ -278,7 +278,7 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
 
         if (typeof value !== 'number') return null
 
-        return `Fps: ${value.toFixed(2)}`
+        return `fps_value: ${value.toFixed(2)}`
     }
 
     get state() {
