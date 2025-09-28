@@ -232,12 +232,33 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
 
     get extruderFpsStatusRecords(): Record<string, unknown>[] {
         const records: Record<string, unknown>[] = []
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return records
 
         for (const key of this.extruderFpsConfigKeys) {
             const candidate = this.getPrinterObject(key)
             if (!candidate || typeof candidate !== 'object') continue
 
-            records.push(candidate as Record<string, unknown>)
+            const record = candidate as Record<string, unknown>
+            if (!records.includes(record)) records.push(record)
+        }
+
+        for (const [key, value] of Object.entries(this.printerStateObject)) {
+            if (!/^fps\s+/i.test(key)) continue
+            if (!value || typeof value !== 'object') continue
+
+            const record = value as Record<string, unknown>
+            const candidates = [record['extruder'], record['extruder_name']]
+
+            if (candidates.some((candidate) => this.normalizeExtruderName(candidate) === normalized)) {
+                if (!records.includes(record)) records.push(record)
+            }
+        }
+
+        for (const assignment of this.amsAssignments) {
+            if (!assignment || typeof assignment !== 'object') continue
+
+            if (!records.includes(assignment)) records.push(assignment)
         }
 
         return records
@@ -246,16 +267,28 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     readFpsValue(record: Record<string, unknown> | null): number | null {
         if (!record) return null
 
-        const rawValue = record['fps_value']
-        if (typeof rawValue === 'number') return Number.isFinite(rawValue) ? rawValue : null
+        const sources: unknown[] = [record['fps_value'], record['fps'], record['value']]
 
-        if (typeof rawValue === 'string') {
-            const trimmed = rawValue.trim()
-            if (!trimmed) return null
+        if ('status' in record && typeof record.status === 'object' && record.status !== null) {
+            const status = record.status as Record<string, unknown>
+            sources.push(status['fps_value'], status['value'])
+        }
 
-            const parsed = Number(trimmed)
-            return Number.isFinite(parsed) ? parsed : null
+        for (const source of sources) {
+            if (typeof source === 'number') return Number.isFinite(source) ? source : null
 
+            if (typeof source === 'string') {
+                const trimmed = source.trim()
+                if (!trimmed) continue
+
+                const parsed = Number(trimmed)
+                if (Number.isFinite(parsed)) return parsed
+            }
+
+            if (source && typeof source === 'object' && source !== record) {
+                const nested = this.readFpsValue(source as Record<string, unknown>)
+                if (typeof nested === 'number') return nested
+            }
         }
 
         return null
@@ -278,7 +311,7 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
 
         if (typeof value !== 'number') return null
 
-        return `fps_value: ${value.toFixed(2)}`
+        return `Fps: ${value.toFixed(2)}`
     }
 
     get state() {
