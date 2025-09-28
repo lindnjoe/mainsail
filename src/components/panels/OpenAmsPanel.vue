@@ -110,6 +110,14 @@ export default class OpenAmsPanel extends Mixins(BaseMixin) {
         return this.translateOrDefault('Panels.OpenAms.Title', 'OpenAMS')
     }
 
+
+    mounted() {
+        this.$store.dispatch('oams/requestSnapshot').catch(() => {
+            /* ignore */
+        })
+    }
+
+
     get statusHeading(): string {
         return this.translateOrDefault('Panels.OpenAms.StatusHeading', 'Feeder Status')
     }

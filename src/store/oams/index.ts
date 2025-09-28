@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import { Module } from 'vuex'
 import { RootState } from '@/store/types'
 
@@ -225,6 +226,9 @@ type StatusUpdate = {
     details?: Record<string, unknown> | null
     isError?: boolean
     eventId?: string | null
+
+    updatedAt?: number | null
+
 }
 
 const normalizeStatusUpdate = (
@@ -320,6 +324,27 @@ export const oams: Module<OamsState, RootState> = {
         },
     },
     mutations: {
+        reset(state) {
+            state.pending = {}
+            state.activeId = null
+            state.statuses = {}
+        },
+        resetStatuses(state) {
+            state.statuses = {}
+        },
+        replacePending(state, events: PauseEvent[]) {
+            const nextPending: Record<string, PauseEvent> = {}
+
+            events.forEach((event) => {
+                const eventId = event?.params?.event_id
+                if (eventId) {
+                    nextPending[eventId] = event
+                }
+            })
+
+            state.pending = nextPending
+            state.activeId = getNextActiveId(state.pending)
+        },
         enqueue(state, payload: PauseEvent) {
             const eventId = payload?.params?.event_id
             if (!eventId) return
@@ -407,7 +432,12 @@ export const oams: Module<OamsState, RootState> = {
                     update.eventId === undefined
                         ? previous?.eventId ?? null
                         : update.eventId ?? null,
-                updatedAt: Date.now(),
+
+                updatedAt:
+                    update.updatedAt === undefined
+                        ? Date.now()
+                        : update.updatedAt ?? Date.now(),
+
             }
 
             state.statuses = {
@@ -417,6 +447,10 @@ export const oams: Module<OamsState, RootState> = {
         },
     },
     actions: {
+
+        reset({ commit }) {
+            commit('reset')
+        },
         handleRemoteEvent({ commit }, remote: PauseEventPayload) {
             const pauseEvent = normalizePauseEvent(remote)
 
@@ -447,6 +481,98 @@ export const oams: Module<OamsState, RootState> = {
                         eventId: pauseEvent.params.event_id,
                     })
                 }
+
+            }
+        },
+        async requestSnapshot({ commit }) {
+            if (!Vue.$socket) return
+
+            try {
+                const response = await Vue.$socket.emitAndWait(
+                    'printer.objects.query',
+                    { objects: { oams_manager: [] } },
+                    {}
+                )
+
+                const manager = response?.status?.oams_manager
+                if (!manager || typeof manager !== 'object') return
+
+                const statusCandidates: unknown[] = Array.isArray(manager.statuses)
+                    ? manager.statuses
+                    : Array.isArray(manager.feeder_status)
+                    ? manager.feeder_status
+                    : []
+
+                commit('resetStatuses')
+
+                statusCandidates.forEach((candidate) => {
+                    const payload: PauseEventPayload = {
+                        method: 'oams.status_update',
+                        params: candidate,
+                    }
+
+                    const update = normalizeStatusUpdate(payload, null)
+                    if (!update) return
+
+                    const record = isPlainObject(candidate) ? (candidate as Record<string, unknown>) : null
+                    const updatedAt =
+                        typeof record?.updated_at === 'number'
+                            ? record.updated_at
+                            : typeof record?.timestamp === 'number'
+                            ? record.timestamp
+                            : null
+
+                    commit('setStatus', {
+                        ...update,
+                        updatedAt,
+                    })
+                })
+
+                const pauseRecords: PauseEvent[] = []
+                const pauseCandidates: unknown[] = Array.isArray(manager.pause_events)
+                    ? manager.pause_events
+                    : []
+
+                pauseCandidates.forEach((candidate) => {
+                    const payload: PauseEventPayload = {
+                        method: 'oams.pause_event',
+                        params: candidate,
+                    }
+
+                    const pauseEvent = normalizePauseEvent(payload)
+                    if (pauseEvent) {
+                        pauseRecords.push(pauseEvent)
+                    }
+                })
+
+                commit('replacePending', pauseRecords)
+
+                pauseRecords.forEach((pauseEvent) => {
+                    const paramsRecord = pauseEvent.params as Record<string, unknown>
+                    const statusId = getStatusId(paramsRecord)
+
+                    if (!statusId) return
+
+                    const updatedAt =
+                        typeof paramsRecord['timestamp'] === 'number' ? (paramsRecord['timestamp'] as number) : null
+
+                    commit('setStatus', {
+                        id: statusId,
+                        fps: toStringOrNull(paramsRecord['fps']) ?? statusId,
+                        lane: toStringOrNull(paramsRecord['lane']),
+                        status: 'paused',
+                        message: toStringOrNull(paramsRecord['message']),
+                        reason: toStringOrNull(paramsRecord['reason']),
+                        details: isPlainObject(paramsRecord['details'])
+                            ? (paramsRecord['details'] as Record<string, unknown>)
+                            : null,
+                        isError: true,
+                        eventId: pauseEvent.params.event_id,
+                        updatedAt,
+                    })
+                })
+            } catch (error) {
+                window.console.error('[OpenAMS] Failed to request snapshot', error)
 
             }
         },

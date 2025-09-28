@@ -174,6 +174,7 @@ export const actions: ActionTree<SocketState, RootState> = {
 
     onClose({ commit }) {
         commit('setDisconnected')
+        commit('oams/reset', null, { root: true })
     },
 
     onMessage({ commit, dispatch }, payload) {
@@ -193,14 +194,17 @@ export const actions: ActionTree<SocketState, RootState> = {
                 dispatch('server/stopKlippyConnectedInterval', null, { root: true })
                 dispatch('server/stopKlippyStateInterval', null, { root: true })
                 dispatch('printer/init', null, { root: true })
+                dispatch('oams/requestSnapshot', undefined, { root: true })
                 break
 
             case 'notify_klippy_disconnected':
                 dispatch('server/setKlippyDisconnected', null, { root: true })
+                commit('oams/reset', null, { root: true })
                 break
 
             case 'notify_klippy_shutdown':
                 dispatch('server/setKlippyShutdown', null, { root: true })
+                commit('oams/reset', null, { root: true })
                 break
 
             case 'notify_proc_stat_update':
