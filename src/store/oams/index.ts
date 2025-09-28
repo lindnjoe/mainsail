@@ -304,129 +304,6 @@ const normalizeStatusUpdate = (
     }
 }
 
-const ensureRecordWithId = (
-    candidate: unknown,
-    fallbackId?: string | null
-): Record<string, unknown> | null => {
-    if (!isPlainObject(candidate)) return null
-
-    const record = { ...(candidate as Record<string, unknown>) }
-
-    const explicitId = toStringOrNull(record['id'])
-    const normalizedId = explicitId ?? (fallbackId ? String(fallbackId) : null)
-
-    if (!normalizedId) return null
-
-    record['id'] = normalizedId
-
-    return record
-}
-
-const collectStatusRecords = (
-    source: unknown,
-    fallbackId?: string | null
-): Record<string, unknown>[] => {
-    if (!source) return []
-
-    if (Array.isArray(source)) {
-        return source
-            .map((item) => ensureRecordWithId(item, fallbackId))
-            .filter((item): item is Record<string, unknown> => !!item)
-    }
-
-    if (isPlainObject(source)) {
-        return Object.entries(source as Record<string, unknown>)
-            .map(([key, value]) => ensureRecordWithId(value, key))
-            .filter((item): item is Record<string, unknown> => !!item)
-    }
-
-    return []
-}
-
-const deriveStatusFromFpsState = (
-    id: string,
-    state: Record<string, unknown>
-): Record<string, unknown> => {
-    const currentGroup = toStringOrNull(state['current_group'])
-    const currentOams = toStringOrNull(state['current_oams'])
-    const currentLane = toStringOrNull(state['lane']) ?? currentOams
-    const stateName = toStringOrNull(state['state_name']) ?? toStringOrNull(state['status'])
-    const spoolIndex =
-        state['current_spool_idx'] !== undefined && state['current_spool_idx'] !== null
-            ? state['current_spool_idx']
-            : state['spool']
-
-    let message: string | null = toStringOrNull(state['message'])
-
-    if (!message && stateName) {
-        const normalized = stateName.toLowerCase()
-        const spoolLabel = spoolIndex !== undefined ? String(spoolIndex) : null
-
-        if (normalized === 'loaded') {
-            if (currentGroup && spoolLabel) {
-                message = `Loaded ${currentGroup} spool ${spoolLabel}`
-            } else if (currentGroup) {
-                message = `Loaded ${currentGroup}`
-            } else if (spoolLabel) {
-                message = `Loaded spool ${spoolLabel}`
-            } else {
-                message = 'Follower loaded'
-            }
-        } else if (normalized === 'loading') {
-            if (currentGroup && spoolLabel) {
-                message = `Loading ${currentGroup} spool ${spoolLabel}`
-            } else if (currentGroup) {
-                message = `Loading ${currentGroup}`
-            } else if (spoolLabel) {
-                message = `Loading spool ${spoolLabel}`
-            } else {
-                message = 'Loading filament'
-            }
-        } else if (normalized === 'unloading') {
-            if (currentGroup && spoolLabel) {
-                message = `Unloading ${currentGroup} spool ${spoolLabel}`
-            } else if (currentGroup) {
-                message = `Unloading ${currentGroup}`
-            } else if (spoolLabel) {
-                message = `Unloading spool ${spoolLabel}`
-            } else {
-                message = 'Unloading filament'
-            }
-        } else if (normalized === 'unloaded') {
-            message = 'Follower idle'
-        }
-    }
-
-    const details: Record<string, unknown> = {}
-
-    if (currentOams) {
-        details.oams = currentOams
-    }
-    if (spoolIndex !== undefined && spoolIndex !== null) {
-        details.spool_index = spoolIndex
-    }
-
-    return {
-        id,
-        fps: currentGroup ?? toStringOrNull(state['fps']) ?? id,
-        lane: currentLane ?? null,
-        status: stateName ?? null,
-        message: message ?? null,
-        details: Object.keys(details).length
-            ? details
-            : isPlainObject(state['details'])
-            ? (state['details'] as Record<string, unknown>)
-            : null,
-        updated_at:
-            typeof state['updated_at'] === 'number'
-                ? (state['updated_at'] as number)
-                : typeof state['timestamp'] === 'number'
-                ? (state['timestamp'] as number)
-                : Date.now(),
-
-    }
-}
-
 export const oams: Module<OamsState, RootState> = {
     namespaced: true,
     state: (): OamsState => ({
@@ -620,95 +497,40 @@ export const oams: Module<OamsState, RootState> = {
                 const manager = response?.status?.oams_manager
                 if (!manager || typeof manager !== 'object') return
 
-
-                if (!isPlainObject(manager)) return
-
-                const managerRecord = manager as Record<string, unknown>
-
-                const baseStatusRecords: Record<string, unknown>[] = [
-                    ...collectStatusRecords(managerRecord['statuses']),
-                    ...collectStatusRecords(managerRecord['feeder_status']),
-                    ...collectStatusRecords(managerRecord['feederStatus']),
-                    ...collectStatusRecords(managerRecord['status']),
-                ]
-
-                const reservedKeys = new Set([
-                    'statuses',
-                    'feeder_status',
-                    'feederStatus',
-                    'status',
-                    'pause_events',
-                    'pauseEvents',
-                    'oams',
-                ])
-
-                Object.entries(managerRecord).forEach(([key, value]) => {
-                    if (reservedKeys.has(key)) return
-                    if (!isPlainObject(value)) return
-
-                    const stateRecord = value as Record<string, unknown>
-
-                    if (
-                        !('state_name' in stateRecord) &&
-                        !('status' in stateRecord) &&
-                        !('current_group' in stateRecord) &&
-                        !('current_oams' in stateRecord) &&
-                        !('current_spool_idx' in stateRecord)
-                    ) {
-                        return
-                    }
-
-                    baseStatusRecords.push(deriveStatusFromFpsState(key, stateRecord))
-                })
-
-                const statusRecordMap = new Map<string, Record<string, unknown>>()
-
-                baseStatusRecords.forEach((record) => {
-                    const id = toStringOrNull(record['id'])
-                    if (!id) return
-
-                    if (statusRecordMap.has(id)) {
-                        const previous = statusRecordMap.get(id) as Record<string, unknown>
-                        statusRecordMap.set(id, { ...record, ...previous })
-                    } else {
-                        statusRecordMap.set(id, record)
-                    }
-                })
+                const statusCandidates: unknown[] = Array.isArray(manager.statuses)
+                    ? manager.statuses
+                    : Array.isArray(manager.feeder_status)
+                    ? manager.feeder_status
+                    : []
 
                 commit('resetStatuses')
 
-                statusRecordMap.forEach((record) => {
+                statusCandidates.forEach((candidate) => {
                     const payload: PauseEventPayload = {
                         method: 'oams.status_update',
-                        params: record,
-
+                        params: candidate,
                     }
 
                     const update = normalizeStatusUpdate(payload, null)
                     if (!update) return
 
-
-                    const timestamp =
-                        typeof record['updated_at'] === 'number'
-                            ? (record['updated_at'] as number)
-                            : typeof record['timestamp'] === 'number'
-                            ? (record['timestamp'] as number)
-                            : update.updatedAt ?? Date.now()
+                    const record = isPlainObject(candidate) ? (candidate as Record<string, unknown>) : null
+                    const updatedAt =
+                        typeof record?.updated_at === 'number'
+                            ? record.updated_at
+                            : typeof record?.timestamp === 'number'
+                            ? record.timestamp
+                            : null
 
                     commit('setStatus', {
                         ...update,
-                        updatedAt: timestamp,
-
+                        updatedAt,
                     })
                 })
 
                 const pauseRecords: PauseEvent[] = []
-
-                const pauseCandidates: unknown[] = Array.isArray(managerRecord['pause_events'])
-                    ? (managerRecord['pause_events'] as unknown[])
-                    : Array.isArray(managerRecord['pauseEvents'])
-                    ? (managerRecord['pauseEvents'] as unknown[])
-
+                const pauseCandidates: unknown[] = Array.isArray(manager.pause_events)
+                    ? manager.pause_events
                     : []
 
                 pauseCandidates.forEach((candidate) => {
