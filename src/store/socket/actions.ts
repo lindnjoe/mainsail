@@ -3,6 +3,99 @@ import { ActionTree } from 'vuex'
 import { SocketState } from '@/store/socket/types'
 import { RootState } from '@/store/types'
 
+type RemotePayload = {
+    method?: string
+    name?: string
+    remote_method?: string
+    params?: unknown
+    args?: unknown
+    payload?: unknown
+    [key: string]: unknown
+}
+
+const remoteMethodKeys: Array<'method' | 'name' | 'remote_method'> = ['method', 'name', 'remote_method']
+
+const getRemoteMethod = (payload: RemotePayload | null): string | null => {
+    if (!payload) return null
+
+    for (const key of remoteMethodKeys) {
+        const value = payload[key]
+        if (typeof value === 'string') return value
+    }
+
+    return null
+}
+
+const isRecord = (value: unknown): value is RemotePayload => {
+    return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+const isRemoteCandidate = (value: unknown): value is RemotePayload => {
+    if (!isRecord(value)) return false
+
+    return remoteMethodKeys.some((key) => typeof value[key] === 'string')
+}
+
+const buildRemoteFromTuple = (
+    methodCandidate: unknown,
+    paramsCandidate: unknown
+): RemotePayload | null => {
+    if (typeof methodCandidate === 'string') {
+        const remote: RemotePayload = { method: methodCandidate }
+
+        if (isRecord(paramsCandidate)) {
+            if ('params' in paramsCandidate || 'args' in paramsCandidate) {
+                return {
+                    ...paramsCandidate,
+                    method: methodCandidate,
+                }
+            }
+
+            return {
+                method: methodCandidate,
+                params: paramsCandidate,
+            }
+        }
+
+        return remote
+    }
+
+    if (isRemoteCandidate(methodCandidate)) {
+        return methodCandidate
+    }
+
+    if (isRemoteCandidate(paramsCandidate)) {
+        return paramsCandidate
+    }
+
+    return null
+}
+
+const extractRemotePayload = (params: unknown): RemotePayload | null => {
+    if (Array.isArray(params)) {
+        for (const item of params) {
+            if (isRemoteCandidate(item)) return item
+        }
+
+        if (params.length >= 2) {
+            for (let index = 0; index < params.length - 1; index += 1) {
+                const candidate = buildRemoteFromTuple(params[index], params[index + 1])
+                if (candidate) return candidate
+            }
+        }
+
+        if (params.length === 1) {
+            return buildRemoteFromTuple(params[0], undefined)
+        }
+
+        return null
+    }
+
+    if (isRemoteCandidate(params)) return params
+
+    return null
+}
+
 export const actions: ActionTree<SocketState, RootState> = {
     reset({ commit }) {
         commit('setDisconnected')
@@ -116,26 +209,20 @@ export const actions: ActionTree<SocketState, RootState> = {
                 break
 
             case 'notify_remote_method': {
-                const remoteParams = Array.isArray(payload.params) ? payload.params[0] : payload.params
 
-                if (!remoteParams || typeof remoteParams !== 'object') break
+                const remotePayload = extractRemotePayload(payload.params)
+                const remoteMethod = getRemoteMethod(remotePayload ?? null)
 
-                const remoteRecord = remoteParams as Record<string, unknown>
-                const remoteMethod =
-                    typeof remoteRecord.method === 'string'
-                        ? remoteRecord.method
-                        : typeof remoteRecord.name === 'string'
-                          ? remoteRecord.name
-                          : undefined
 
                 if (
                     typeof remoteMethod === 'string' &&
                     (remoteMethod.startsWith('oams.') || remoteMethod.startsWith('open_ams.'))
                 ) {
                     const normalizedRemote =
-                        remoteParams.method === remoteMethod
-                            ? remoteParams
-                            : { ...remoteParams, method: remoteMethod }
+
+                        remotePayload && remotePayload.method === remoteMethod
+                            ? remotePayload
+                            : { ...(remotePayload ?? {}), method: remoteMethod }
 
                     dispatch('oams/handleRemoteEvent', normalizedRemote, { root: true })
 

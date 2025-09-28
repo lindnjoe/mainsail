@@ -18,8 +18,11 @@ type PauseEventPayload = {
     method?: string
 
     name?: string
+    remote_method?: string
+    params?: unknown
+    args?: unknown
+    payload?: unknown
 
-    params?: PauseEventParams | PauseEventParams[] | null
 }
 
 export type OamsState = {
@@ -38,21 +41,48 @@ const isPauseEventMethod = (method: string | null | undefined): method is string
     return method === 'oams.pause_event' || method === 'open_ams.pause_event'
 }
 
+
+const methodKeys: Array<keyof PauseEventPayload> = ['method', 'name', 'remote_method']
+
 const getPauseEventMethod = (payload: PauseEventPayload): string | null => {
-    if (typeof payload?.method === 'string') return payload.method
-    if (typeof payload?.name === 'string') return payload.name
+    for (const key of methodKeys) {
+        const value = payload?.[key]
+        if (typeof value === 'string') return value
+    }
     return null
 }
 
-const getPauseEventParams = (
-    params?: PauseEventParams | PauseEventParams[] | null
-): Record<string, unknown> | null => {
-    if (Array.isArray(params)) {
-        const firstParam = params.find((param) => param && typeof param === 'object')
-        return (firstParam as Record<string, unknown>) ?? null
+const pauseParamKeys = ['event', 'params', 'payload', 'data', 'args'] as const
+
+const findPauseEventParams = (value: unknown, depth = 0): Record<string, unknown> | null => {
+    if (depth > 5 || value === null || value === undefined) return null
+
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            const nested = findPauseEventParams(item, depth + 1)
+            if (nested) return nested
+        }
+        return null
     }
 
-    if (params && typeof params === 'object') return params as Record<string, unknown>
+    if (typeof value === 'object') {
+        const record = value as Record<string, unknown>
+        if (
+            record.event_id !== undefined ||
+            record.eventId !== undefined ||
+            record.eventID !== undefined
+        ) {
+            return record
+        }
+
+        for (const key of pauseParamKeys) {
+            if (key in record) {
+                const nested = findPauseEventParams(record[key], depth + 1)
+                if (nested) return nested
+            }
+        }
+    }
+
 
     return null
 }
@@ -61,7 +91,9 @@ const normalizePauseEvent = (payload: PauseEventPayload): PauseEvent | null => {
     const method = getPauseEventMethod(payload)
     if (!isPauseEventMethod(method)) return null
 
-    const params = getPauseEventParams(payload.params)
+
+    const params = findPauseEventParams([payload.params, payload.args, payload.payload, payload])
+
     if (!params) return null
 
     const rawEventId = params.event_id ?? params.eventId ?? params.eventID
