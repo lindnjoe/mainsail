@@ -16,6 +16,9 @@ export type PauseEvent = {
 
 type PauseEventPayload = {
     method?: string
+
+    name?: string
+
     params?: PauseEventParams | PauseEventParams[] | null
 }
 
@@ -28,18 +31,51 @@ const getNextActiveId = (pending: Record<string, PauseEvent>): string | null => 
     return Object.keys(pending)[0] ?? null
 }
 
+
+const isPauseEventMethod = (method: string | null | undefined): method is string => {
+    if (typeof method !== 'string') return false
+
+    return method === 'oams.pause_event' || method === 'open_ams.pause_event'
+}
+
+const getPauseEventMethod = (payload: PauseEventPayload): string | null => {
+    if (typeof payload?.method === 'string') return payload.method
+    if (typeof payload?.name === 'string') return payload.name
+    return null
+}
+
+const getPauseEventParams = (
+    params?: PauseEventParams | PauseEventParams[] | null
+): Record<string, unknown> | null => {
+    if (Array.isArray(params)) {
+        const firstParam = params.find((param) => param && typeof param === 'object')
+        return (firstParam as Record<string, unknown>) ?? null
+    }
+
+    if (params && typeof params === 'object') return params as Record<string, unknown>
+
+    return null
+}
+
 const normalizePauseEvent = (payload: PauseEventPayload): PauseEvent | null => {
-    if (!payload?.method) return null
+    const method = getPauseEventMethod(payload)
+    if (!isPauseEventMethod(method)) return null
 
-    const params = Array.isArray(payload.params) ? payload.params[0] : payload.params
-    if (!params || typeof params !== 'object') return null
+    const params = getPauseEventParams(payload.params)
+    if (!params) return null
 
-    const eventId = (params as PauseEventParams).event_id
-    if (!eventId) return null
+    const rawEventId = params.event_id ?? params.eventId ?? params.eventID
+    if (rawEventId === undefined || rawEventId === null) return null
+
+    const eventId = String(rawEventId)
 
     return {
-        method: payload.method,
-        params: params as PauseEventParams,
+        method,
+        params: {
+            ...(params as PauseEventParams),
+            event_id: eventId,
+        },
+
     }
 }
 
@@ -92,7 +128,9 @@ export const oams: Module<OamsState, RootState> = {
     actions: {
         handleRemoteEvent({ commit }, remote: PauseEventPayload) {
             const pauseEvent = normalizePauseEvent(remote)
-            if (pauseEvent?.method === 'oams.pause_event') {
+
+            if (pauseEvent && isPauseEventMethod(pauseEvent.method)) {
+
                 commit('enqueue', pauseEvent)
             }
         },
