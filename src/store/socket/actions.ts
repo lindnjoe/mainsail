@@ -10,15 +10,19 @@ type RemotePayload = {
     params?: unknown
     args?: unknown
     payload?: unknown
+
     data?: unknown
+
     [key: string]: unknown
 }
 
 const remoteMethodKeys: Array<'method' | 'name' | 'remote_method'> = ['method', 'name', 'remote_method']
 
+
 const isRecord = (value: unknown): value is RemotePayload => {
     return !!value && typeof value === 'object' && !Array.isArray(value)
 }
+
 
 const getRemoteMethod = (payload: RemotePayload | null): string | null => {
     if (!payload) return null
@@ -30,6 +34,7 @@ const getRemoteMethod = (payload: RemotePayload | null): string | null => {
 
     return null
 }
+
 
 const isOamsMethod = (method: string | null | undefined): method is string => {
     if (typeof method !== 'string') return false
@@ -125,6 +130,7 @@ const findOamsRemotePayload = (value: unknown, depth = 0): RemotePayload | null 
     if (typeof value === 'string' && isOamsMethod(value)) {
         return { method: value }
     }
+
 
     return null
 }
@@ -246,10 +252,12 @@ export const actions: ActionTree<SocketState, RootState> = {
                 break
 
             case 'notify_remote_method': {
+
                 const remotePayload = findOamsRemotePayload(payload.params)
 
                 if (remotePayload) {
                     dispatch('oams/handleRemoteEvent', remotePayload, { root: true })
+
                 }
                 break
             }
