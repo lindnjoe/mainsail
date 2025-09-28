@@ -116,9 +116,27 @@ export const actions: ActionTree<SocketState, RootState> = {
                 break
 
             case 'notify_remote_method': {
-                const remote = payload.params?.[0]
-                if (remote?.method?.startsWith('oams.')) {
-                    dispatch('oams/handleRemoteEvent', remote, { root: true })
+                const remoteParams = Array.isArray(payload.params) ? payload.params[0] : payload.params
+                if (!remoteParams || typeof remoteParams !== 'object') break
+
+                const remoteRecord = remoteParams as Record<string, unknown>
+                const remoteMethod =
+                    typeof remoteRecord.method === 'string'
+                        ? remoteRecord.method
+                        : typeof remoteRecord.name === 'string'
+                          ? remoteRecord.name
+                          : undefined
+
+                if (
+                    typeof remoteMethod === 'string' &&
+                    (remoteMethod.startsWith('oams.') || remoteMethod.startsWith('open_ams.'))
+                ) {
+                    const normalizedRemote =
+                        remoteParams.method === remoteMethod
+                            ? remoteParams
+                            : { ...remoteParams, method: remoteMethod }
+
+                    dispatch('oams/handleRemoteEvent', normalizedRemote, { root: true })
                 }
                 break
             }
