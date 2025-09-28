@@ -100,6 +100,7 @@ export const allDashboardPanels = [
     'machine-settings',
     'miniconsole',
     'miscellaneous',
+    'open-ams',
     'spoolman',
     'temperature',
     'webcam',
