@@ -16,11 +16,13 @@ export type PauseEvent = {
 
 type PauseEventPayload = {
     method?: string
+
     name?: string
     remote_method?: string
     params?: unknown
     args?: unknown
     payload?: unknown
+
 }
 
 export type OamsState = {
@@ -32,11 +34,13 @@ const getNextActiveId = (pending: Record<string, PauseEvent>): string | null => 
     return Object.keys(pending)[0] ?? null
 }
 
+
 const isPauseEventMethod = (method: string | null | undefined): method is string => {
     if (typeof method !== 'string') return false
 
     return method === 'oams.pause_event' || method === 'open_ams.pause_event'
 }
+
 
 const methodKeys: Array<keyof PauseEventPayload> = ['method', 'name', 'remote_method']
 
@@ -79,6 +83,7 @@ const findPauseEventParams = (value: unknown, depth = 0): Record<string, unknown
         }
     }
 
+
     return null
 }
 
@@ -86,7 +91,9 @@ const normalizePauseEvent = (payload: PauseEventPayload): PauseEvent | null => {
     const method = getPauseEventMethod(payload)
     if (!isPauseEventMethod(method)) return null
 
+
     const params = findPauseEventParams([payload.params, payload.args, payload.payload, payload])
+
     if (!params) return null
 
     const rawEventId = params.event_id ?? params.eventId ?? params.eventID
@@ -100,6 +107,7 @@ const normalizePauseEvent = (payload: PauseEventPayload): PauseEvent | null => {
             ...(params as PauseEventParams),
             event_id: eventId,
         },
+
     }
 }
 
@@ -152,7 +160,9 @@ export const oams: Module<OamsState, RootState> = {
     actions: {
         handleRemoteEvent({ commit }, remote: PauseEventPayload) {
             const pauseEvent = normalizePauseEvent(remote)
+
             if (pauseEvent && isPauseEventMethod(pauseEvent.method)) {
+
                 commit('enqueue', pauseEvent)
             }
         },
