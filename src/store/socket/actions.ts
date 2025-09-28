@@ -10,10 +10,19 @@ type RemotePayload = {
     params?: unknown
     args?: unknown
     payload?: unknown
+
+    data?: unknown
+
     [key: string]: unknown
 }
 
 const remoteMethodKeys: Array<'method' | 'name' | 'remote_method'> = ['method', 'name', 'remote_method']
+
+
+const isRecord = (value: unknown): value is RemotePayload => {
+    return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
 
 const getRemoteMethod = (payload: RemotePayload | null): string | null => {
     if (!payload) return null
@@ -26,72 +35,102 @@ const getRemoteMethod = (payload: RemotePayload | null): string | null => {
     return null
 }
 
-const isRecord = (value: unknown): value is RemotePayload => {
-    return !!value && typeof value === 'object' && !Array.isArray(value)
+
+const isOamsMethod = (method: string | null | undefined): method is string => {
+    if (typeof method !== 'string') return false
+    return method.startsWith('oams.') || method.startsWith('open_ams.')
 }
 
-const isRemoteCandidate = (value: unknown): value is RemotePayload => {
-    if (!isRecord(value)) return false
+const normalizeTuplePayload = (method: string, candidate: unknown): RemotePayload => {
+    if (isRecord(candidate)) {
+        if (remoteMethodKeys.some((key) => typeof candidate[key] === 'string')) {
+            return {
+                ...candidate,
+                method,
+            }
+        }
 
-    return remoteMethodKeys.some((key) => typeof value[key] === 'string')
+        if ('params' in candidate || 'args' in candidate || 'payload' in candidate) {
+            return {
+                ...candidate,
+                method,
+            }
+        }
+
+        return {
+            method,
+            params: candidate,
+        }
+    }
+
+    if (Array.isArray(candidate)) {
+        return {
+            method,
+            args: candidate,
+        }
+    }
+
+    if (candidate !== undefined) {
+        return {
+            method,
+            params: candidate,
+        }
+    }
+
+    return { method }
 }
 
-const buildRemoteFromTuple = (
-    methodCandidate: unknown,
-    paramsCandidate: unknown
-): RemotePayload | null => {
-    if (typeof methodCandidate === 'string') {
-        const remote: RemotePayload = { method: methodCandidate }
+const findOamsRemotePayload = (value: unknown, depth = 0): RemotePayload | null => {
+    if (depth > 8 || value === null || value === undefined) return null
 
-        if (isRecord(paramsCandidate)) {
-            if ('params' in paramsCandidate || 'args' in paramsCandidate) {
-                return {
-                    ...paramsCandidate,
-                    method: methodCandidate,
+    if (Array.isArray(value)) {
+        for (let index = 0; index < value.length; index += 1) {
+            const item = value[index]
+
+            if (typeof item === 'string') {
+                if (isOamsMethod(item)) {
+                    const next = index + 1 < value.length ? value[index + 1] : undefined
+                    return normalizeTuplePayload(item, next)
+                }
+
+                if (index + 1 < value.length) {
+                    const combined = {
+                        method: item,
+                        params: value[index + 1],
+                    }
+                    const nested = findOamsRemotePayload(combined, depth + 1)
+                    if (nested) return nested
                 }
             }
 
-            return {
-                method: methodCandidate,
-                params: paramsCandidate,
-            }
+            const nested = findOamsRemotePayload(item, depth + 1)
+            if (nested) return nested
         }
-
-        return remote
-    }
-
-    if (isRemoteCandidate(methodCandidate)) {
-        return methodCandidate
-    }
-
-    if (isRemoteCandidate(paramsCandidate)) {
-        return paramsCandidate
-    }
-
-    return null
-}
-
-const extractRemotePayload = (params: unknown): RemotePayload | null => {
-    if (Array.isArray(params)) {
-        for (const item of params) {
-            if (isRemoteCandidate(item)) return item
-        }
-
-        if (params.length >= 2) {
-            for (let index = 0; index < params.length - 1; index += 1) {
-                const candidate = buildRemoteFromTuple(params[index], params[index + 1])
-                if (candidate) return candidate
-            }
-        }
-
-        if (params.length === 1) {
-            return buildRemoteFromTuple(params[0], undefined)
-        }
-
         return null
     }
 
-    if (isRemoteCandidate(params)) return params
+    if (isRecord(value)) {
+        const method = getRemoteMethod(value)
+        if (isOamsMethod(method)) {
+            if (value.method === method) return value
+            return {
+                ...value,
+                method,
+            }
+        }
+
+        for (const key of ['params', 'args', 'payload', 'data']) {
+            if (key in value) {
+                const nested = findOamsRemotePayload(value[key], depth + 1)
+                if (nested) return nested
+            }
+        }
+    }
+
+    if (typeof value === 'string' && isOamsMethod(value)) {
+        return { method: value }
+    }
+
 
     return null
 }
@@ -210,21 +249,10 @@ export const actions: ActionTree<SocketState, RootState> = {
 
             case 'notify_remote_method': {
 
-                const remotePayload = extractRemotePayload(payload.params)
-                const remoteMethod = getRemoteMethod(remotePayload ?? null)
+                const remotePayload = findOamsRemotePayload(payload.params)
 
-
-                if (
-                    typeof remoteMethod === 'string' &&
-                    (remoteMethod.startsWith('oams.') || remoteMethod.startsWith('open_ams.'))
-                ) {
-                    const normalizedRemote =
-
-                        remotePayload && remotePayload.method === remoteMethod
-                            ? remotePayload
-                            : { ...(remotePayload ?? {}), method: remoteMethod }
-
-                    dispatch('oams/handleRemoteEvent', normalizedRemote, { root: true })
+                if (remotePayload) {
+                    dispatch('oams/handleRemoteEvent', remotePayload, { root: true })
 
                 }
                 break
