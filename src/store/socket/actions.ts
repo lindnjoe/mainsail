@@ -117,6 +117,7 @@ export const actions: ActionTree<SocketState, RootState> = {
 
             case 'notify_remote_method': {
                 const remoteParams = Array.isArray(payload.params) ? payload.params[0] : payload.params
+
                 if (!remoteParams || typeof remoteParams !== 'object') break
 
                 const remoteRecord = remoteParams as Record<string, unknown>
@@ -137,6 +138,7 @@ export const actions: ActionTree<SocketState, RootState> = {
                             : { ...remoteParams, method: remoteMethod }
 
                     dispatch('oams/handleRemoteEvent', normalizedRemote, { root: true })
+
                 }
                 break
             }
