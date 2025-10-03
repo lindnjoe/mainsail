@@ -75,7 +75,6 @@ export const getDefaultState = (): GuiState => {
                 { name: 'macros', visible: true },
                 { name: 'machine-settings', visible: true },
                 { name: 'miscellaneous', visible: true },
-                { name: 'open-ams', visible: true },
                 { name: 'temperature', visible: true },
                 { name: 'miniconsole', visible: false },
             ],
@@ -86,7 +85,6 @@ export const getDefaultState = (): GuiState => {
                 { name: 'macros', visible: true },
                 { name: 'machine-settings', visible: true },
                 { name: 'miscellaneous', visible: true },
-                { name: 'open-ams', visible: true },
             ],
             tabletLayout2: [
                 { name: 'temperature', visible: true },
@@ -99,7 +97,6 @@ export const getDefaultState = (): GuiState => {
                 { name: 'macros', visible: true },
                 { name: 'machine-settings', visible: true },
                 { name: 'miscellaneous', visible: true },
-                { name: 'open-ams', visible: true },
             ],
             desktopLayout2: [
                 { name: 'temperature', visible: true },
@@ -110,7 +107,6 @@ export const getDefaultState = (): GuiState => {
                 { name: 'extruder-control', visible: true },
                 { name: 'macros', visible: true },
                 { name: 'miscellaneous', visible: true },
-                { name: 'open-ams', visible: true },
             ],
             widescreenLayout2: [
                 { name: 'temperature', visible: true },
