@@ -10,7 +10,7 @@
             </template>
             <span>{{ sensorOutput }}</span>
         </v-tooltip>
-        <span class="text-body-1">{{ $t('Panels.AfcPanel.Hub') }}</span>
+        <span class="text-body-1">{{ indicatorLabel }}</span>
     </div>
 </template>
 <script lang="ts">
@@ -23,6 +23,8 @@ export default class AfcPanelUnitHub extends Mixins(BaseMixin, AfcMixin) {
     @Prop({ type: String, required: true }) readonly name!: string
     @Prop({ type: String, default: '' }) readonly unitType!: string
     @Prop({ type: Array, default: () => [] }) readonly lanes!: string[]
+    @Prop({ type: String, default: '' }) readonly displayName!: string
+    @Prop({ type: String, default: '' }) readonly label!: string
 
     get hub() {
         return this.getAfcHubObject(this.name)
@@ -37,7 +39,7 @@ export default class AfcPanelUnitHub extends Mixins(BaseMixin, AfcMixin) {
     get sensorOutput() {
         const status = this.sensorStatus ? this.$t('Panels.AfcPanel.Detected') : this.$t('Panels.AfcPanel.Empty')
 
-        return `${this.name} ${this.$t('Panels.AfcPanel.HubLoad')} - ${status}`
+        return `${this.indicatorName} ${this.$t('Panels.AfcPanel.HubLoad')} - ${status}`
     }
 
     get sensorClass() {
@@ -45,6 +47,17 @@ export default class AfcPanelUnitHub extends Mixins(BaseMixin, AfcMixin) {
             success: this.sensorStatus,
             error: !this.sensorStatus,
         }
+    }
+
+    get indicatorName() {
+        return this.displayName || this.name
+    }
+
+    get indicatorLabel() {
+        if (this.label) return this.label
+        if (this.displayName) return this.displayName
+
+        return String(this.$t('Panels.AfcPanel.Hub'))
     }
 
     get directLaneLoaded() {
