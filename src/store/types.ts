@@ -3,7 +3,6 @@ import { ServerState } from '@/store/server/types'
 import { PrinterState } from '@/store/printer/types'
 import { GuiState } from '@/store/gui/types'
 import { EditorState } from '@/store/editor/types'
-import { OamsState } from '@/store/oams'
 
 export interface RootState {
     packageVersion: string
@@ -17,7 +16,6 @@ export interface RootState {
     printer?: PrinterState
     server?: ServerState
     editor?: EditorState
-    oams?: OamsState
 }
 
 export interface RootStateDependency {
