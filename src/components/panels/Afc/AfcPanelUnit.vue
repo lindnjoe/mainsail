@@ -7,7 +7,12 @@
                     {{ unitNameOutput }}
                 </h3>
                 <v-spacer />
-                <afc-panel-unit-hub v-for="hub in hubs" :key="hub" :name="hub" />
+                <afc-panel-unit-hub
+                    v-for="hub in hubs"
+                    :key="hub"
+                    :name="hub"
+                    :unit-type="type"
+                    :lanes="lanes" />
             </v-col>
         </v-row>
         <v-row>
