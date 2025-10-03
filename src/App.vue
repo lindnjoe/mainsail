@@ -18,7 +18,6 @@
             <the-bed-screws-dialog />
             <the-screws-tilt-adjust-dialog />
             <the-macro-prompt />
-            <the-oams-pause-dialog />
         </template>
         <the-select-printer-dialog v-else-if="instancesDB !== 'moonraker'" />
         <the-connecting-dialog v-else />
@@ -46,7 +45,6 @@ import TheScrewsTiltAdjustDialog from '@/components/dialogs/TheScrewsTiltAdjustD
 import { setAndLoadLocale } from './plugins/i18n'
 import TheMacroPrompt from '@/components/dialogs/TheMacroPrompt.vue'
 import { AppRoute } from '@/routes'
-import TheOamsPauseDialog from '@/components/dialogs/TheOamsPauseDialog.vue'
 
 Component.registerHooks(['metaInfo'])
 
@@ -65,7 +63,6 @@ Component.registerHooks(['metaInfo'])
         TheManualProbeDialog,
         TheBedScrewsDialog,
         TheScrewsTiltAdjustDialog,
-        TheOamsPauseDialog,
     },
 })
 export default class App extends Mixins(BaseMixin, ThemeMixin) {
