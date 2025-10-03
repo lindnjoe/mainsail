@@ -66,7 +66,7 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
                 name: laneHubName,
                 lanes: [laneName],
                 displayName: `${hubDisplay} - ${laneDisplay}`,
-                label: `${hubDisplay} - ${laneDisplay}`,
+                label: hubDisplay,
             })
 
             return acc
