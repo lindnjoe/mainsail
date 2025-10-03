@@ -8,11 +8,13 @@
                 </h3>
                 <v-spacer />
                 <afc-panel-unit-hub
-                    v-for="hub in hubs"
-                    :key="hub"
-                    :name="hub"
+                    v-for="hub in hubIndicators"
+                    :key="hub.key"
+                    :name="hub.name"
                     :unit-type="type"
-                    :lanes="lanes" />
+                    :lanes="hub.lanes"
+                    :display-name="hub.displayName"
+                    :label="hub.label" />
             </v-col>
         </v-row>
         <v-row>
@@ -32,6 +34,46 @@ import { convertName } from '@/plugins/helpers'
 @Component
 export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
     @Prop({ type: String, required: true }) readonly name!: string
+
+    private readonly directHubNames = ['direct', 'direct_load']
+
+    get hubIndicators(): HubIndicator[] {
+        const baseIndicators = this.hubs.map((hubName) => ({
+            key: `hub-${hubName}`,
+            name: hubName,
+            lanes: this.lanes,
+        }))
+
+        if (this.type.toLowerCase() !== 'boxturtle') {
+            return baseIndicators
+        }
+
+        const filteredBase = baseIndicators.filter(
+            (indicator) => !this.directHubNames.includes(this.normalizeHubName(indicator.name))
+        )
+
+        const directIndicators = this.lanes.reduce<HubIndicator[]>((acc, laneName) => {
+            const laneHubName = this.normalizeHubName(this.getLaneHubValue(laneName))
+            if (!laneHubName || !this.directHubNames.includes(laneHubName)) {
+                return acc
+            }
+
+            const hubDisplay = convertName(laneHubName)
+            const laneDisplay = convertName(laneName)
+
+            acc.push({
+                key: `hub-${laneHubName}-${laneName}`,
+                name: laneHubName,
+                lanes: [laneName],
+                displayName: `${hubDisplay} - ${laneDisplay}`,
+                label: `${hubDisplay} - ${laneDisplay}`,
+            })
+
+            return acc
+        }, [])
+
+        return [...filteredBase, ...directIndicators]
+    }
 
     get unitName() {
         return this.name.substring(this.name.indexOf(' ') + 1)
@@ -82,6 +124,55 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
                 return null
         }
     }
+
+    getLaneHubValue(laneName: string) {
+        const lane = this.getLaneObject(laneName)
+        const laneHub = lane?.hub ?? lane?.hub_name
+        if (laneHub) return laneHub
+
+        const settingsHub = this.getLaneSettings(laneName)?.hub
+
+        return settingsHub ?? ''
+    }
+
+    getLaneObject(laneName: string) {
+        return (this.getAfcLaneObject(laneName) ?? {}) as Record<string, any>
+    }
+
+    getLaneSettings(laneName: string) {
+        return (this.getAfcLaneSettings(laneName) ?? {}) as Record<string, any>
+    }
+
+    normalizeHubName(value: unknown): string {
+        if (!value) return ''
+
+        if (typeof value === 'string') {
+            const normalized = value.trim().toLowerCase()
+            if (normalized.startsWith('hub:')) {
+                return normalized.slice(4).trim()
+            }
+
+            return normalized
+        }
+
+        if (typeof value === 'object') {
+            const record = value as Record<string, unknown>
+            const nameValue = record?.name
+            if (typeof nameValue === 'string') {
+                return this.normalizeHubName(nameValue)
+            }
+        }
+
+        return ''
+    }
+}
+
+interface HubIndicator {
+    key: string
+    name: string
+    lanes: string[]
+    displayName?: string
+    label?: string
 }
 </script>
 
