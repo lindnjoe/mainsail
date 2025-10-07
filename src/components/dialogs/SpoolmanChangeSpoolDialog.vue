@@ -230,11 +230,11 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         if (this.afcLane) {
             const previousSpoolId = this.currentLaneSpoolId
             if (previousSpoolId !== null && previousSpoolId !== spool.id) {
-                this.updateLoadedLaneExtra(previousSpoolId, null)
+                this.updateSpoolmanLoadedLaneExtra(previousSpoolId, null)
             }
 
             this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=${spool.id}`)
-            this.updateLoadedLaneExtra(spool.id, this.laneNameForExtra)
+            this.updateSpoolmanLoadedLaneExtra(spool.id, this.laneNameForExtra)
             this.close()
             return
         }
@@ -265,20 +265,6 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         this.sendGcode(`SAVE_VARIABLE VARIABLE=${this.tool?.toLowerCase()}__spool_id VALUE=${spool.id}`)
     }
 
-    updateLoadedLaneExtra(spoolId: number, laneName: string | null) {
-        if (!this.spoolManagerUrl) return
-
-        const numericSpoolId = Number(spoolId)
-
-        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
-
-
-        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
-            spoolId: numericSpoolId,
-            laneName,
-        })
-    }
-
     sendGcode(gcode: string) {
         this.$store.dispatch('server/addEvent', { message: gcode, type: 'command' })
         this.$socket.emit('printer.gcode.script', { script: gcode })
@@ -291,7 +277,7 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
 
 
         if (currentSpoolId !== null) {
-            this.updateLoadedLaneExtra(currentSpoolId, null)
+            this.updateSpoolmanLoadedLaneExtra(currentSpoolId, null)
         }
 
         this.close()
