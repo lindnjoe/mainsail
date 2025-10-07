@@ -94,6 +94,19 @@ export default class AfcMixin extends Vue {
         return this.$store.state.server.config.config?.spoolman?.server ?? null
     }
 
+    updateSpoolmanLoadedLaneExtra(spoolId: number, laneName: string | null) {
+        if (!this.spoolManagerUrl) return
+
+        const numericSpoolId = Number(spoolId)
+
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
+        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
+            spoolId: numericSpoolId,
+            laneName,
+        })
+    }
+
     get afcShowFilamentName(): boolean {
         return this.$store.state.gui.view.afc?.showFilamentName ?? false
     }

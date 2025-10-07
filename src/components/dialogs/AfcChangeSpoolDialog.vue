@@ -402,7 +402,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
 
             if (currentSpoolId !== null) {
-                this.updateLoadedLaneExtra(currentSpoolId, null)
+                this.updateSpoolmanLoadedLaneExtra(currentSpoolId, null)
             }
 
             this.unloadSpool = false
@@ -443,7 +443,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
         const previousSpoolId = this.currentLaneSpoolId
         if (previousSpoolId !== null && previousSpoolId !== Number(spool.id)) {
-            this.updateLoadedLaneExtra(previousSpoolId, null)
+            this.updateSpoolmanLoadedLaneExtra(previousSpoolId, null)
         }
 
         this.$nextTick(async () => {
@@ -454,22 +454,8 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
             }
         })
 
-        this.updateLoadedLaneExtra(spool.id, this.laneData?.name ?? null)
+        this.updateSpoolmanLoadedLaneExtra(spool.id, this.laneData?.name ?? null)
         this.close()
-    }
-
-    updateLoadedLaneExtra(spoolId: number, laneName: string | null) {
-        if (!this.spoolManagerUrl) return
-
-        const numericSpoolId = Number(spoolId)
-
-        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
-
-
-        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
-            spoolId: numericSpoolId,
-            laneName,
-        })
     }
 
     initializeFields() {
