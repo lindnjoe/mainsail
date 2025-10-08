@@ -264,20 +264,21 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     }
 
     checkLoadedSpool(spoolId: number): number {
-
         const lane = this.lanesData.find((lane) => lane.spool_id === spoolId.toString())
-        return lane ? lane.lane : -1
-    }
+        if (lane) return lane.lane
 
+        const loadedLaneMap = this.$store.getters['server/spoolman/loadedLaneMap'] as
+            | Record<number, string>
+            | undefined
 
-    get currentLaneSpoolId(): number | null {
-        const laneSpoolId = this.laneData?.spool_id
-        if (laneSpoolId === undefined || laneSpoolId === null || laneSpoolId === '') return null
+        if (!loadedLaneMap) return -1
 
-        const numericSpoolId = Number(laneSpoolId)
-        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return null
+        const laneName = loadedLaneMap[spoolId]
+        if (!laneName) return -1
 
-        return numericSpoolId
+        const laneFromName = this.lanesData.find((laneEntry) => laneEntry.name === laneName)
+
+        return laneFromName ? laneFromName.lane : -1
     }
 
 
@@ -379,8 +380,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     clearSpoolmanSpool() {
         if (this.laneData != null) {
 
-            const currentSpoolId = this.currentLaneSpoolId
-
             const ejectSpoolman = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=`
 
             this.$nextTick(async () => {
@@ -399,12 +398,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
             if (!this.spoolManagerUrl) {
                 this.manualyClearSpool()
             }
-
-
-            if (currentSpoolId !== null) {
-                this.updateSpoolmanLoadedLaneExtra(currentSpoolId, null)
-            }
-
             this.unloadSpool = false
         }
     }
@@ -441,11 +434,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     setSpool(spool: any) {
         const gcode = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=${spool.id}`
 
-        const previousSpoolId = this.currentLaneSpoolId
-        if (previousSpoolId !== null && previousSpoolId !== Number(spool.id)) {
-            this.updateSpoolmanLoadedLaneExtra(previousSpoolId, null)
-        }
-
         this.$nextTick(async () => {
             try {
                 this.$socket.emit('printer.gcode.script', { script: gcode }, { loading: 'macro_' + gcode })
@@ -454,7 +442,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
             }
         })
 
-        this.updateSpoolmanLoadedLaneExtra(spool.id, this.laneData?.name ?? null)
         this.close()
     }
 

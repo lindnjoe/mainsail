@@ -157,29 +157,6 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         return this.getAfcLaneObject(this.afcLane)
     }
 
-    get laneNameForExtra(): string | null {
-        if (!this.afcLane) return null
-
-        const lane = this.afcLaneObjectData as { name?: string } | null
-        const laneName = lane?.name
-
-        if (laneName && laneName.length > 0) return laneName
-
-        return this.afcLane
-    }
-
-
-    get currentLaneSpoolId(): number | null {
-        const lane = this.afcLaneObjectData as { spool_id?: string | number } | null
-        if (!lane || lane.spool_id === undefined || lane.spool_id === null || lane.spool_id === '') return null
-
-        const spoolId = Number(lane.spool_id)
-        if (Number.isNaN(spoolId) || spoolId <= 0) return null
-
-        return spoolId
-
-    }
-
     openSpoolManager() {
         window.open(this.spoolManagerUrl, '_blank')
     }
@@ -228,13 +205,7 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
     setSpool(spool: ServerSpoolmanStateSpool) {
         // if afcLane is set, execute SET_SPOOL_ID and close, because it's not an active printing spool change
         if (this.afcLane) {
-            const previousSpoolId = this.currentLaneSpoolId
-            if (previousSpoolId !== null && previousSpoolId !== spool.id) {
-                this.updateSpoolmanLoadedLaneExtra(previousSpoolId, null)
-            }
-
             this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=${spool.id}`)
-            this.updateSpoolmanLoadedLaneExtra(spool.id, this.laneNameForExtra)
             this.close()
             return
         }
@@ -271,14 +242,7 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
     }
 
     ejectSpool() {
-        const currentSpoolId = this.currentLaneSpoolId
-
         this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=`)
-
-
-        if (currentSpoolId !== null) {
-            this.updateSpoolmanLoadedLaneExtra(currentSpoolId, null)
-        }
 
         this.close()
     }
