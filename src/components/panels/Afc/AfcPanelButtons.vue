@@ -83,6 +83,15 @@ export default class AfcPanelButtons extends Mixins(BaseMixin, AfcMixin) {
             })
         }
 
+        if (this.afc?.td1_present) {
+            afcMacros.push({
+                icon: '',
+                text: 'Capture TD',
+                macroName: 'AFC_GET_TD_ONE_DATA',
+                disabled: this.printerIsPrintingOnly,
+            })
+        }
+
         if (settings.wipe) {
             afcMacros.push({
                 icon: null,
@@ -112,11 +121,6 @@ export default class AfcPanelButtons extends Mixins(BaseMixin, AfcMixin) {
                 }
             })
             .filter((button) => button.macro !== null)
-    }
-
-    doSend(gcode: string) {
-        this.$store.dispatch('server/addEvent', { message: gcode, type: 'command' })
-        this.$socket.emit('printer.gcode.script', { script: gcode })
     }
 
     downloadDebugJson() {

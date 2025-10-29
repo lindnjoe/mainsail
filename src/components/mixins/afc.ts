@@ -132,6 +132,10 @@ export default class AfcMixin extends Vue {
         return this.$store.state.gui.view.afc?.showToolChangeCount ?? true
     }
 
+    get afcShowTd1Color(): boolean {
+        return this.$store.state.gui.view.afc?.showTd1Color ?? true
+    }
+
     getPrinterObject(key: string) {
         const printer = this.$store.state.printer ?? {}
         return printer[key] ?? null
