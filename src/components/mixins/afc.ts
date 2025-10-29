@@ -24,6 +24,11 @@ export default class AfcMixin extends Vue {
         return this.afc.lanes ?? []
     }
 
+    // Return lane objects for easier template handling
+    get lanesData() {
+        return this.afcLanes.map((name) => this.getAfcLaneObject(name))
+    }
+
     get afcLoadedSpools() {
         if (this.afcLanes.length === 0) return []
 
@@ -77,8 +82,30 @@ export default class AfcMixin extends Vue {
         return mapList.sort()
     }
 
+    // Alias used by newer AFC components
+    get mapList() {
+        return this.afcMapList
+    }
+
     get afcExistsSpoolman() {
         return this.$store.state.server.components.includes('spoolman')
+    }
+
+    get spoolManagerUrl() {
+        return this.$store.state.server.config.config?.spoolman?.server ?? null
+    }
+
+    updateSpoolmanLoadedLaneExtra(spoolId: number, laneName: string | null) {
+        if (!this.spoolManagerUrl) return
+
+        const numericSpoolId = Number(spoolId)
+
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return
+
+        this.$store.dispatch('server/spoolman/updateLoadedLaneExtra', {
+            spoolId: numericSpoolId,
+            laneName,
+        })
     }
 
     get afcShowFilamentName(): boolean {
@@ -146,6 +173,11 @@ export default class AfcMixin extends Vue {
     getAfcExtruderSettings(extruder: string) {
         const key = `AFC_extruder ${extruder}`
         return this.getPrinterSettings(key) ?? {}
+    }
+
+    getAfcUnitObject(unit: string) {
+        const key = `AFC_unit ${unit}`
+        return this.getPrinterObject(key) ?? {}
     }
 
     getAfcBufferObject(buffer: string) {

@@ -11,6 +11,7 @@ export interface ServerSpoolmanState {
     active_spool: ServerSpoolmanStateSpool | null
     vendors: ServerSpoolmanStateVendor[]
     feeds: string[]
+    spools?: ServerSpoolmanStateSpool[]
 }
 
 export interface ServerSpoolmanStateVendor {
@@ -49,4 +50,6 @@ export interface ServerSpoolmanStateSpool {
     used_weight: number
     location?: string
     comment?: string
+    extra?: Record<string, string>
+    loaded_lane?: string | null
 }
