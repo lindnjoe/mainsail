@@ -33,7 +33,7 @@
                 <v-tooltip top>
                     <template #activator="{ on, attrs }">
                         <v-btn
-                            :disabled="toolLoaded || (!laneRunout && toolLoaded) || isAmsUnit"
+                            :disabled="toolLoaded || (!laneRunout && toolLoaded) || isOpenAmsUnit"
                             dense
                             class="flex-grow-1 px-0 last-btn"
                             v-bind="attrs"
@@ -81,9 +81,9 @@ export default class AfcPanelUnitLaneActions extends Mixins(BaseMixin, AfcMixin,
         return this.lane.tool_loaded ?? false
     }
 
-    get isAmsUnit() {
+    get isOpenAmsUnit() {
         const unit = this.getAfcUnitObject(this.lane.unit)
-        return (unit.type ?? '').toUpperCase() === 'AMS'
+        return (unit.type ?? '').toUpperCase() === 'OPENAMS'
     }
 
     loadLane() {

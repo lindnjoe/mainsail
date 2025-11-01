@@ -15,7 +15,7 @@
                             dense
                             small
                             class="w-100 elevation-0"
-                            :disabled="isAmsUnit"
+                            :disabled="isOpenAmsUnit"
                             v-bind="attrs"
                             v-on="on"
                             @click="ejectLane">
@@ -48,9 +48,9 @@ export default class AfcPanelUnitLaneEmpty extends Mixins(BaseMixin, AfcMixin) {
         return this.lane?.prep ?? false
     }
 
-    get isAmsUnit() {
+    get isOpenAmsUnit() {
         const unit = this.getAfcUnitObject(this.lane.unit)
-        return (unit.type ?? '').toUpperCase() === 'AMS'
+        return (unit.type ?? '').toUpperCase() === 'OPENAMS'
     }
 
     get text() {

@@ -140,8 +140,8 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     get bufferOutput() {
 
         if (this.isActiveExtruder) {
-            const amsOutput = this.activeAmsFpsOutput
-            if (amsOutput) return amsOutput
+            const openAmsOutput = this.activeOpenAmsFpsOutput
+            if (openAmsOutput) return openAmsOutput
         }
 
         const extruder = this.afcCurrentLane?.extruder ?? ''
@@ -187,13 +187,13 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         return (this.$store.state.printer?.configfile?.settings ?? {}) as Record<string, unknown>
     }
 
-    get amsAssignments(): Record<string, unknown>[] {
+    get openAmsAssignments(): Record<string, unknown>[] {
         const assignments: Record<string, unknown>[] = []
         const normalized = this.normalizedExtruderName
         if (!normalized) return assignments
 
         for (const [key, value] of Object.entries(this.printerStateObject)) {
-            if (!/^AFC_AMS\s+/i.test(key)) continue
+            if (!/^AFC_OPEN_AMS\s+/i.test(key)) continue
             if (!value || typeof value !== 'object') continue
 
             const record = value as Record<string, unknown>
@@ -207,8 +207,8 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         return assignments
     }
 
-    get isAmsExtruder() {
-        if (this.amsAssignments.length > 0) return true
+    get isOpenAmsExtruder() {
+        if (this.openAmsAssignments.length > 0) return true
 
         return this.extruderFpsConfigKeys.length > 0
     }
@@ -262,8 +262,8 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
 
-    get activeAmsFpsValue(): number | null {
-        if (!this.isActiveExtruder || !this.isAmsExtruder) return null
+    get activeOpenAmsFpsValue(): number | null {
+        if (!this.isActiveExtruder || !this.isOpenAmsExtruder) return null
 
         for (const record of this.extruderFpsStatusRecords) {
             const value = this.readFpsValue(record)
@@ -273,8 +273,8 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         return null
     }
 
-    get activeAmsFpsOutput(): string | null {
-        const value = this.activeAmsFpsValue
+    get activeOpenAmsFpsOutput(): string | null {
+        const value = this.activeOpenAmsFpsValue
 
         if (typeof value !== 'number') return null
 
