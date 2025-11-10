@@ -86,11 +86,17 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
     }
 
     get available_hdc1080() {
-        return this.available_sensors.filter((name: string) => {
+        // Find objects that start with 'hdc1080' (e.g., 'hdc1080 oams1')
+        const hdc1080Objects = Object.keys(this.$store.state.printer).filter((name) => name.startsWith('hdc1080'))
+
+        // Also check for temperature_sensor objects with sensor_type 'HDC1080'
+        const hdc1080Sensors = this.available_sensors.filter((name: string) => {
             const settingsObject = this.settings[name.toLowerCase()] ?? {}
             const sensor_type = settingsObject.sensor_type ?? ''
             return sensor_type === 'HDC1080'
         })
+
+        return [...hdc1080Objects, ...hdc1080Sensors]
     }
 
     get monitors() {
