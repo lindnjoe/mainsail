@@ -102,7 +102,9 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
     }
 
     get monitors() {
-        return this.available_monitors.sort(this.sortObjectName)
+        return this.available_monitors
+            .filter((fullName: string) => !fullName.startsWith('hdc1080'))
+            .sort(this.sortObjectName)
     }
 
     get temperature_fans() {
