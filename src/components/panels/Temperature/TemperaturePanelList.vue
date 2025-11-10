@@ -32,6 +32,11 @@
                         :object-name="objectName"
                         :is-responsive-mobile="el.is.mobile ?? false" />
                     <temperature-panel-list-item
+                        v-for="objectName in hdc1080Objects"
+                        :key="objectName"
+                        :object-name="objectName"
+                        :is-responsive-mobile="el.is.mobile ?? false" />
+                    <temperature-panel-list-item
                         v-for="objectName in temperature_sensors"
                         :key="objectName"
                         :object-name="objectName"
@@ -79,6 +84,10 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
         return Object.keys(this.$store.state.printer).filter((name) => name.startsWith('nevermore'))
     }
 
+    get available_hdc1080() {
+        return Object.keys(this.$store.state.printer).filter((name) => name.startsWith('hdc1080'))
+    }
+
     get monitors() {
         return this.available_monitors.sort(this.sortObjectName)
     }
@@ -102,6 +111,13 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
             if (this.available_heaters.includes(fullName)) return false
             if (this.temperature_fans.includes(fullName)) return false
 
+            // Hide temperature_sensor if a corresponding hdc1080 sensor exists
+            if (fullName.startsWith('temperature_sensor ')) {
+                const sensorName = fullName.replace('temperature_sensor ', '')
+                const hdc1080Name = `hdc1080 ${sensorName}`
+                if (hdc1080Name in this.$store.state.printer) return false
+            }
+
             // hide MCU & Host sensors, if the function is enabled
             if (this.hideMcuHostSensors && this.checkMcuHostSensor(fullName)) return false
 
@@ -115,6 +131,10 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
 
     get nevermoreObjects() {
         return this.filterNamesAndSort(this.available_nevermores)
+    }
+
+    get hdc1080Objects() {
+        return this.filterNamesAndSort(this.available_hdc1080)
     }
 
     get settings() {
