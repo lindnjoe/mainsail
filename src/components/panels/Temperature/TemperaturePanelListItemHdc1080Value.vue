@@ -105,7 +105,8 @@ export default class TemperaturePanelListItemHdc1080Value extends Mixins(BaseMix
     get isVisible() {
         if (this.value === null) return false
 
-        return this.guiSetting
+        // Default to visible if GUI setting is undefined, otherwise use the setting
+        return this.guiSetting ?? true
     }
 }
 </script>
