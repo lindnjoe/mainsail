@@ -70,7 +70,9 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
     }
 
     get filteredHeaters() {
-        return this.filterNamesAndSort(this.available_heaters)
+        return this.filterNamesAndSort(this.available_heaters).filter(
+            (fullName: string) => !fullName.startsWith('hdc1080')
+        )
     }
 
     get available_sensors() {
