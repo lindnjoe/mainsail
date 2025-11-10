@@ -31,11 +31,6 @@
                         :key="objectName"
                         :object-name="objectName"
                         :is-responsive-mobile="el.is.mobile ?? false" />
-                    <temperature-panel-list-item-hdc1080
-                        v-for="objectName in hdc1080Objects"
-                        :key="objectName"
-                        :object-name="objectName"
-                        :is-responsive-mobile="el.is.mobile ?? false" />
                     <temperature-panel-list-item
                         v-for="objectName in temperature_sensors"
                         :key="objectName"
@@ -59,10 +54,9 @@ import Component from 'vue-class-component'
 import { Mixins } from 'vue-property-decorator'
 import BaseMixin from '@/components/mixins/base'
 import TemperaturePanelListItemNevermore from '@/components/panels/Temperature/TemperaturePanelListItemNevermore.vue'
-import TemperaturePanelListItemHdc1080 from '@/components/panels/Temperature/TemperaturePanelListItemHdc1080.vue'
 
 @Component({
-    components: { TemperaturePanelListItemNevermore, TemperaturePanelListItemHdc1080 },
+    components: { TemperaturePanelListItemNevermore },
 })
 export default class TemperaturePanelList extends Mixins(BaseMixin) {
     get available_heaters() {
@@ -70,9 +64,7 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
     }
 
     get filteredHeaters() {
-        return this.filterNamesAndSort(this.available_heaters).filter(
-            (fullName: string) => !fullName.startsWith('hdc1080')
-        )
+        return this.filterNamesAndSort(this.available_heaters)
     }
 
     get available_sensors() {
@@ -87,24 +79,8 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
         return Object.keys(this.$store.state.printer).filter((name) => name.startsWith('nevermore'))
     }
 
-    get available_hdc1080() {
-        // Find objects that start with 'hdc1080' (e.g., 'hdc1080 oams1')
-        const hdc1080Objects = Object.keys(this.$store.state.printer).filter((name) => name.startsWith('hdc1080'))
-
-        // Also check for temperature_sensor objects with sensor_type 'HDC1080'
-        const hdc1080Sensors = this.available_sensors.filter((name: string) => {
-            const settingsObject = this.settings[name.toLowerCase()] ?? {}
-            const sensor_type = settingsObject.sensor_type ?? ''
-            return sensor_type === 'HDC1080'
-        })
-
-        return [...hdc1080Objects, ...hdc1080Sensors]
-    }
-
     get monitors() {
-        return this.available_monitors
-            .filter((fullName: string) => !fullName.startsWith('hdc1080'))
-            .sort(this.sortObjectName)
+        return this.available_monitors.sort(this.sortObjectName)
     }
 
     get temperature_fans() {
@@ -125,10 +101,6 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
         return this.filterNamesAndSort(this.available_sensors).filter((fullName: string) => {
             if (this.available_heaters.includes(fullName)) return false
             if (this.temperature_fans.includes(fullName)) return false
-            if (this.available_hdc1080.includes(fullName)) return false
-
-            // Also exclude any sensor that starts with 'hdc1080'
-            if (fullName.startsWith('hdc1080')) return false
 
             // hide MCU & Host sensors, if the function is enabled
             if (this.hideMcuHostSensors && this.checkMcuHostSensor(fullName)) return false
@@ -143,10 +115,6 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
 
     get nevermoreObjects() {
         return this.filterNamesAndSort(this.available_nevermores)
-    }
-
-    get hdc1080Objects() {
-        return this.filterNamesAndSort(this.available_hdc1080)
     }
 
     get settings() {

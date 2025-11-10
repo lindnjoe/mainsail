@@ -32,6 +32,9 @@
             <div v-if="rpm !== null">
                 <small :class="rpmClass">{{ rpm }} RPM</small>
             </div>
+            <div v-if="humidity !== null">
+                <small>{{ formatHumidity }}</small>
+            </div>
             <temperature-panel-list-item-additional-sensor
                 v-if="additionalSensorName"
                 :object-name="objectName"
@@ -222,6 +225,14 @@ export default class TemperaturePanelListItem extends Mixins(BaseMixin) {
 
     get formatTemperature() {
         return `${this.temperature?.toFixed(1) ?? '--'}°C`
+    }
+
+    get humidity(): number | null {
+        return this.printerObject?.humidity ?? null
+    }
+
+    get formatHumidity() {
+        return `${this.humidity?.toFixed(1) ?? '--'} %`
     }
 
     get min_temp() {
