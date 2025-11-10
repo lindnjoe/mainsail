@@ -1,8 +1,8 @@
 <template>
-    <div v-if="isVisible">
+    <div v-if="isVisible" style="margin-bottom: 2px;">
         <v-tooltip top :disabled="disableTooltip">
             <template #activator="{ on, attrs }">
-                <span :style="cssStyle" v-bind="attrs" v-on="on">{{ formatValue }}</span>
+                <small :style="cssStyle" v-bind="attrs" v-on="on">{{ formatValue }}</small>
             </template>
             <span>
                 {{ $t('Panels.TemperaturePanel.Max') }}: {{ formatValue_max }}
@@ -103,10 +103,8 @@ export default class TemperaturePanelListItemHdc1080Value extends Mixins(BaseMix
     }
 
     get isVisible() {
-        if (this.value === null) return false
-
-        // Default to visible if GUI setting is undefined, otherwise use the setting
-        return this.guiSetting ?? true
+        // Always show both temperature and humidity if they exist
+        return this.value !== null
     }
 }
 </script>
