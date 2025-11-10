@@ -123,6 +123,9 @@ export default class TemperaturePanelList extends Mixins(BaseMixin) {
             if (this.temperature_fans.includes(fullName)) return false
             if (this.available_hdc1080.includes(fullName)) return false
 
+            // Also exclude any sensor that starts with 'hdc1080'
+            if (fullName.startsWith('hdc1080')) return false
+
             // hide MCU & Host sensors, if the function is enabled
             if (this.hideMcuHostSensors && this.checkMcuHostSensor(fullName)) return false
 
