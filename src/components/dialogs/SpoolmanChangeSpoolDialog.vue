@@ -75,6 +75,7 @@
 import Component from 'vue-class-component'
 import { Mixins, Prop, Watch } from 'vue-property-decorator'
 import BaseMixin from '@/components/mixins/base'
+import AfcMixin from '@/components/mixins/afc'
 import Panel from '@/components/ui/Panel.vue'
 import { mdiCloseThick, mdiAdjust, mdiDatabase, mdiMagnify, mdiRefresh, mdiEject } from '@mdi/js'
 import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
@@ -82,7 +83,7 @@ import SpoolmanChangeSpoolDialogRow from '@/components/dialogs/SpoolmanChangeSpo
 @Component({
     components: { SpoolmanChangeSpoolDialogRow, Panel },
 })
-export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
+export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     mdiAdjust = mdiAdjust
     mdiCloseThick = mdiCloseThick
     mdiDatabase = mdiDatabase
@@ -149,6 +150,12 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
         const settings = this.$store.state.printer.configfile?.settings ?? {}
 
         return 'save_variables' in settings
+    }
+
+    get afcLaneObjectData() {
+        if (!this.afcLane) return null
+
+        return this.getAfcLaneObject(this.afcLane)
     }
 
     openSpoolManager() {
@@ -244,6 +251,7 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
 
     ejectSpool() {
         this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=`)
+
         this.close()
     }
 

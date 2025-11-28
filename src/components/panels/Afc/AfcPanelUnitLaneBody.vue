@@ -52,7 +52,7 @@
     </div>
 </template>
 <script lang="ts">
-import { Component, Mixins, Prop } from 'vue-property-decorator'
+import { Component, Mixins, Prop, Watch } from 'vue-property-decorator'
 import BaseMixin from '@/components/mixins/base'
 import AfcMixin from '@/components/mixins/afc'
 import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
@@ -74,6 +74,35 @@ export default class AfcPanelUnitLaneBody extends Mixins(BaseMixin, AfcMixin) {
     showInfintiyDialog = false
     showSpoolmanDialog = false
     showFilamentDialog = false
+
+    private normalizeSpoolId(spoolId: string | number | null | undefined): number | null {
+        const numericSpoolId = Number(spoolId)
+
+        if (Number.isNaN(numericSpoolId) || numericSpoolId <= 0) return null
+
+        return numericSpoolId
+    }
+
+    private syncLoadedLaneExtra(oldSpoolId: number | null, newSpoolId: number | null) {
+        if (!this.spoolManagerUrl) return
+        if (oldSpoolId === newSpoolId) return
+
+        if (oldSpoolId !== null) {
+            this.updateSpoolmanLoadedLaneExtra(oldSpoolId, null)
+        }
+
+        if (newSpoolId !== null) {
+            this.updateSpoolmanLoadedLaneExtra(newSpoolId, this.name)
+        }
+    }
+
+    @Watch('lane.spool_id')
+    onLaneSpoolIdChanged(newValue: string | number | null | undefined, oldValue: string | number | null | undefined) {
+        const oldSpoolId = this.normalizeSpoolId(oldValue)
+        const newSpoolId = this.normalizeSpoolId(newValue)
+
+        this.syncLoadedLaneExtra(oldSpoolId, newSpoolId)
+    }
 
     get lane() {
         return this.getAfcLaneObject(this.name)
