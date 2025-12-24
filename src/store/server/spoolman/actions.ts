@@ -27,7 +27,6 @@ function withLoadedLaneExtra(spool: ServerSpoolmanStateSpool): ServerSpoolmanSta
     }
 }
 
-
 function convertV2response(payload: { error?: { message: string } | null; response: any }) {
     if ((payload.error?.message ?? null) !== null) {
         Vue.$toast.error(payload.error?.message ?? 'unknown spoolman error')
@@ -81,6 +80,10 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
         dispatch('socket/addInitModule', 'server/spoolman/getVendors', { root: true })
 
         dispatch('socket/removeInitModule', 'server/spoolman/init', { root: true })
+
+        // init load spools, but don't wait for it to finish
+        // this is needed because HappyHare or AFC need this data to display all spool data
+        dispatch('refreshSpools')
     },
 
     getActiveSpoolId({ commit, dispatch }, payload) {
