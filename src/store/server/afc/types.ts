@@ -47,7 +47,6 @@ export interface Lane {
     empty: string
 }
 
-
 export interface Extruder {
     name: string
     lane_loaded: string
