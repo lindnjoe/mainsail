@@ -36,6 +36,7 @@
                     <v-icon>{{ mdiRefresh }}</v-icon>
                 </v-btn>
                 <v-btn
+                    v-if="spoolManagerUrl"
                     :title="$t('Panels.SpoolmanPanel.OpenSpoolManager')"
                     class="px-2 minwidth-0 ml-3"
                     @click="openSpoolManager">
@@ -75,7 +76,6 @@
 import Component from 'vue-class-component'
 import { Mixins, Prop, Watch } from 'vue-property-decorator'
 import BaseMixin from '@/components/mixins/base'
-import AfcMixin from '@/components/mixins/afc'
 import Panel from '@/components/ui/Panel.vue'
 import { mdiCloseThick, mdiAdjust, mdiDatabase, mdiMagnify, mdiRefresh, mdiEject } from '@mdi/js'
 import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
@@ -83,7 +83,7 @@ import SpoolmanChangeSpoolDialogRow from '@/components/dialogs/SpoolmanChangeSpo
 @Component({
     components: { SpoolmanChangeSpoolDialogRow, Panel },
 })
-export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
+export default class SpoolmanChangeSpoolDialog extends Mixins(BaseMixin) {
     mdiAdjust = mdiAdjust
     mdiCloseThick = mdiCloseThick
     mdiDatabase = mdiDatabase
@@ -142,28 +142,14 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
         ]
     }
 
-    get spoolManagerUrl() {
-        return this.$store.state.server.config.config?.spoolman?.server ?? null
-    }
-
     get existsSaveVariables() {
         const settings = this.$store.state.printer.configfile?.settings ?? {}
 
         return 'save_variables' in settings
     }
 
-    get afcLaneObjectData() {
-        if (!this.afcLane) return null
-
-        return this.getAfcLaneObject(this.afcLane)
-    }
-
     openSpoolManager() {
         window.open(this.spoolManagerUrl, '_blank')
-    }
-
-    mounted() {
-        this.refresh()
     }
 
     refresh() {
@@ -251,13 +237,15 @@ export default class SpoolmanChangeSpoolDialog extends Mixins(AfcMixin, BaseMixi
 
     ejectSpool() {
         this.sendGcode(`SET_SPOOL_ID LANE=${this.afcLane} SPOOL_ID=`)
-
         this.close()
     }
 
     @Watch('showDialog')
     onShowDialogChanged(newVal: boolean) {
-        if (newVal) this.search = ''
+        if (!newVal) return
+
+        this.refresh()
+        this.search = ''
     }
 }
 </script>
