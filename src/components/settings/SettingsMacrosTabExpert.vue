@@ -140,6 +140,7 @@
                         handle=".handle"
                         ghost-class="ghost"
                         group="macros"
+                        :force-fallback="true"
                         @change="updateMacroOrder">
                         <v-row
                             v-for="(macro, index) in editGroupMacros"

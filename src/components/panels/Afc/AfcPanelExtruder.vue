@@ -138,7 +138,6 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get bufferOutput() {
-
         if (this.isActiveExtruder) {
             const amsOutput = this.activeAmsFpsOutput
             if (amsOutput) return amsOutput
@@ -147,10 +146,8 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         const extruder = this.afcCurrentLane?.extruder ?? ''
         if (extruder !== this.name) return this.$t('Panels.AfcPanel.BufferDisabled')
 
-
         return `${this.afcCurrentLane?.buffer ?? '--'}: ${this.afcCurrentBuffer?.state ?? '--'}`
     }
-
 
     get normalizedExtruderName(): string | null {
         return this.normalizeExtruderName(this.name)
@@ -255,12 +252,10 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
 
             const parsed = Number(trimmed)
             return Number.isFinite(parsed) ? parsed : null
-
         }
 
         return null
     }
-
 
     get activeAmsFpsValue(): number | null {
         if (!this.isActiveExtruder || !this.isAmsExtruder) return null
