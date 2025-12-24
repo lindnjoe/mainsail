@@ -10,7 +10,7 @@
             </template>
             <span>{{ sensorOutput }}</span>
         </v-tooltip>
-        <span class="text-body-1">{{ indicatorLabel }}</span>
+        <span class="text-body-1">{{ $t('Panels.AfcPanel.Hub') }}</span>
     </div>
 </template>
 <script lang="ts">
@@ -21,25 +21,19 @@ import AfcMixin from '@/components/mixins/afc'
 @Component
 export default class AfcPanelUnitHub extends Mixins(BaseMixin, AfcMixin) {
     @Prop({ type: String, required: true }) readonly name!: string
-    @Prop({ type: String, default: '' }) readonly unitType!: string
-    @Prop({ type: Array, default: () => [] }) readonly lanes!: string[]
-    @Prop({ type: String, default: '' }) readonly displayName!: string
-    @Prop({ type: String, default: '' }) readonly label!: string
 
     get hub() {
         return this.getAfcHubObject(this.name)
     }
 
     get sensorStatus() {
-        if (this.directLaneLoaded) return true
-
         return this.hub.state ?? false
     }
 
     get sensorOutput() {
         const status = this.sensorStatus ? this.$t('Panels.AfcPanel.Detected') : this.$t('Panels.AfcPanel.Empty')
 
-        return `${this.indicatorName} ${this.$t('Panels.AfcPanel.HubLoad')} - ${status}`
+        return `${this.name} ${this.$t('Panels.AfcPanel.HubLoad')} - ${status}`
     }
 
     get sensorClass() {
@@ -47,78 +41,6 @@ export default class AfcPanelUnitHub extends Mixins(BaseMixin, AfcMixin) {
             success: this.sensorStatus,
             error: !this.sensorStatus,
         }
-    }
-
-    get indicatorName() {
-        return this.displayName || this.name
-    }
-
-    get indicatorLabel() {
-        if (this.label) return this.label
-        if (this.displayName) return this.displayName
-
-        return String(this.$t('Panels.AfcPanel.Hub'))
-    }
-
-    get directLaneLoaded() {
-        if (this.unitType.toLowerCase() !== 'boxturtle') return false
-
-        return this.lanesForHub.some((laneName) => {
-            const laneSettings = this.getLaneSettings(laneName)
-            const hubSetting = this.normalizeHubName(laneSettings?.hub)
-            if (!['direct', 'direct_load'].includes(hubSetting)) return false
-
-            const lane = this.getLaneObject(laneName)
-
-            return Boolean(lane?.tool_loaded)
-        })
-    }
-
-    get lanesForHub(): string[] {
-        const hubName = this.normalizeHubName(this.name)
-        if (!hubName) return []
-
-        return this.lanes.filter((laneName) => {
-            const lane = this.getLaneObject(laneName)
-            const laneHub = this.normalizeHubName(lane?.hub) || this.normalizeHubName(lane?.hub_name)
-            if (laneHub === hubName) return true
-
-            const laneSettings = this.getLaneSettings(laneName)
-            const settingsHub = this.normalizeHubName(laneSettings?.hub)
-
-            return settingsHub === hubName
-        })
-    }
-
-    getLaneObject(laneName: string) {
-        return (this.getAfcLaneObject(laneName) ?? {}) as Record<string, any>
-    }
-
-    getLaneSettings(laneName: string) {
-        return (this.getAfcLaneSettings(laneName) ?? {}) as Record<string, any>
-    }
-
-    normalizeHubName(value: unknown) {
-        if (!value) return ''
-
-        if (typeof value === 'string') {
-            const normalized = value.trim().toLowerCase()
-            if (normalized.startsWith('hub:')) {
-                return normalized.slice(4).trim()
-            }
-
-            return normalized
-        }
-
-        if (typeof value === 'object') {
-            const record = value as Record<string, unknown>
-            const nameValue = record?.name
-            if (typeof nameValue === 'string') {
-                return this.normalizeHubName(nameValue)
-            }
-        }
-
-        return ''
     }
 }
 </script>
