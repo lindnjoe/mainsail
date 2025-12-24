@@ -188,8 +188,7 @@ import { Lane } from '@/store/server/afc/types'
     components: { AfcChangeSpoolDialogRow, Panel },
 })
 export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
-
-    @Prop({ type: Object, required: true }) laneData!: Lane;
+    @Prop({ type: Object, required: true }) laneData!: Lane
 
     mdiAdjust = mdiAdjust
     mdiCloseThick = mdiCloseThick
@@ -203,9 +202,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
     spoolColor = '#ffffff'
     unloadSpool = false
 
-
-    @Prop({ required: true }) declare readonly showDialog: boolean;
-
+    @Prop({ required: true }) declare readonly showDialog: boolean
 
     search = ''
 
@@ -267,9 +264,7 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
         const lane = this.lanesData.find((lane) => lane.spool_id === spoolId.toString())
         if (lane) return lane.lane
 
-        const loadedLaneMap = this.$store.getters['server/spoolman/loadedLaneMap'] as
-            | Record<number, string>
-            | undefined
+        const loadedLaneMap = this.$store.getters['server/spoolman/loadedLaneMap'] as Record<number, string> | undefined
 
         if (!loadedLaneMap) return -1
 
@@ -280,7 +275,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
         return laneFromName ? laneFromName.lane : -1
     }
-
 
     updateSpool() {
         console.log('Updating spool with the following data:')
@@ -379,7 +373,6 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
     clearSpoolmanSpool() {
         if (this.laneData != null) {
-
             const ejectSpoolman = `SET_SPOOL_ID LANE=${this.laneData.name} SPOOL_ID=`
 
             this.$nextTick(async () => {
@@ -447,11 +440,9 @@ export default class AfcChangeSpoolDialog extends Mixins(AfcMixin, BaseMixin) {
 
     initializeFields() {
         if (this.laneData) {
-
             this.filamentType = this.laneData.material || ''
             this.remainingWeight = this.laneData.weight || 0
             this.spoolColor = this.laneData.color || '#ffffff'
-
         }
     }
 

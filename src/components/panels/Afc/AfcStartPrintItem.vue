@@ -36,7 +36,6 @@
 
                                                 minWidth: '64px',
                                                 maxWidth: '64px',
-
                                             }">
                                             {{ fileWeight }}
                                         </div>
@@ -63,7 +62,6 @@
 
                                                 minWidth: '64px',
                                                 maxWidth: '64px',
-
                                             }">
                                             {{ spoolWeight }}
                                         </div>
@@ -103,28 +101,25 @@ import { ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
 
 @Component({})
 export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
+    @Prop({ required: true }) lane!: Lane
+    @Prop({ required: true }) showUnusedTools!: boolean
+    @Prop({ required: true }) file!: FileStateGcodefile
 
-    @Prop({ required: true }) lane!: Lane;
-    @Prop({ required: true }) showUnusedTools!: boolean;
-    @Prop({ required: true }) file!: FileStateGcodefile;
+    filamentTextColor = filamentTextColor
 
-    filamentTextColor = filamentTextColor;
+    mdiCheck = mdiCheck
+    mdiAlertOutline = mdiAlertOutline
 
-    mdiCheck = mdiCheck;
-    mdiAlertOutline = mdiAlertOutline;
-
-    currentMap = '';
-    currentSpoolId = '';
-    curFile: FileStateGcodefile | null = null;
+    currentMap = ''
+    currentSpoolId = ''
+    curFile: FileStateGcodefile | null = null
 
     @Watch('lane.map')
     @Watch('lane.spool_id')
-
     @Watch('file')
     onLaneInfoChange() {
         if (
             this.lane.map !== this.currentMap ||
-
             this.lane.spool_id !== this.currentSpoolId ||
             this.curFile !== this.file
         ) {
@@ -172,10 +167,8 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     get isTypeMatch() {
         if (!this.fileFilamentType) return true
 
-
         return this.compareMaterials(this.fileFilamentType, this.lane.material)
     }
-
 
     get isWeightSufficient() {
         if (!this.fileWeight) return true
@@ -204,9 +197,7 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
             return {} as ServerSpoolmanStateSpool
         }
 
-
         const spoolId = Number(this.lane?.spool_id)
-
 
         if (spoolId && this.$store.state.server.spoolman.spools) {
             const spool = this.$store.state.server.spoolman.spools.find(
@@ -224,9 +215,7 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.color_hex) {
             color = `#${this.spoolmanSpool.filament.color_hex}`
         } else {
-
             color = this.lane.color ?? '#000'
-
         }
 
         return color
@@ -238,9 +227,7 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.filament?.material) {
             material = this.spoolmanSpool.filament.material
         } else {
-
             material = this.lane.material ?? ''
-
         }
 
         return material
@@ -251,9 +238,7 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
         if (this.spoolManagerUrl && this.spoolmanSpool?.remaining_weight) {
             weight = Math.round(this.spoolmanSpool.remaining_weight)
         } else {
-
             weight = Math.round(this.lane.weight ?? 0)
-
         }
 
         return `${weight} g`
@@ -334,7 +319,6 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
     align-items: center;
     flex: 1;
     cursor: pointer;
-
 }
 
 .filament-info {
@@ -356,11 +340,9 @@ export default class AfcStartPrintItem extends Mixins(AfcMixin, BaseMixin) {
 }
 
 .match-status {
-
     margin-left: 10px;
     max-width: 20px;
     flex: 1;
-
 }
 
 .disabled {
