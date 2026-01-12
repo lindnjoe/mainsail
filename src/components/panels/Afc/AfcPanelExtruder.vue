@@ -138,15 +138,146 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get bufferOutput() {
+        if (this.isActiveExtruder) {
+            const amsOutput = this.activeAmsFpsOutput
+            if (amsOutput) return amsOutput
+        }
+
         const extruder = this.afcCurrentLane?.extruder ?? ''
         if (extruder !== this.name) return this.$t('Panels.AfcPanel.BufferDisabled')
 
         return `${this.afcCurrentLane?.buffer ?? '--'}: ${this.afcCurrentBuffer?.state ?? '--'}`
     }
 
+    get normalizedExtruderName(): string | null {
+        return this.normalizeExtruderName(this.name)
+    }
+
+    normalizeExtruderName(value: unknown): string | null {
+        if (typeof value !== 'string') return null
+
+        const trimmed = value.trim()
+        if (!trimmed) return null
+
+        return trimmed.replace(/\s+/g, '').toUpperCase()
+    }
+
+    get normalizedActiveToolheadExtruder(): string | null {
+        const active = this.$store.state.printer?.toolhead?.extruder
+        return this.normalizeExtruderName(active)
+    }
+
+    get isActiveExtruder() {
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return false
+
+        if (this.normalizeExtruderName(this.afcCurrentLane?.extruder) === normalized) return true
+
+        return this.normalizedActiveToolheadExtruder === normalized
+    }
+
+    get printerStateObject(): Record<string, unknown> {
+        return (this.$store.state.printer ?? {}) as Record<string, unknown>
+    }
+
+    get printerSettingsObject(): Record<string, unknown> {
+        return (this.$store.state.printer?.configfile?.settings ?? {}) as Record<string, unknown>
+    }
+
+    get amsAssignments(): Record<string, unknown>[] {
+        const assignments: Record<string, unknown>[] = []
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return assignments
+
+        for (const [key, value] of Object.entries(this.printerStateObject)) {
+            if (!/^AFC_AMS\s+/i.test(key)) continue
+            if (!value || typeof value !== 'object') continue
+
+            const record = value as Record<string, unknown>
+            const candidates = [record['extruder'], record['extruder_name']]
+
+            if (candidates.some((candidate) => this.normalizeExtruderName(candidate) === normalized)) {
+                assignments.push(record)
+            }
+        }
+
+        return assignments
+    }
+
+    get isAmsExtruder() {
+        if (this.amsAssignments.length > 0) return true
+
+        return this.extruderFpsConfigKeys.length > 0
+    }
+
+    get extruderFpsConfigKeys(): string[] {
+        const keys: string[] = []
+        const normalized = this.normalizedExtruderName
+        if (!normalized) return keys
+
+        for (const [key, value] of Object.entries(this.printerSettingsObject)) {
+            if (!/^fps\s+/i.test(key)) continue
+            if (!value || typeof value !== 'object') continue
+
+            const record = value as Record<string, unknown>
+            const candidate = this.normalizeExtruderName(record['extruder'])
+            if (candidate && candidate === normalized) keys.push(key)
+        }
+
+        return keys
+    }
+
+    get extruderFpsStatusRecords(): Record<string, unknown>[] {
+        const records: Record<string, unknown>[] = []
+
+        for (const key of this.extruderFpsConfigKeys) {
+            const candidate = this.getPrinterObject(key)
+            if (!candidate || typeof candidate !== 'object') continue
+
+            records.push(candidate as Record<string, unknown>)
+        }
+
+        return records
+    }
+
+    readFpsValue(record: Record<string, unknown> | null): number | null {
+        if (!record) return null
+
+        const rawValue = record['fps_value']
+        if (typeof rawValue === 'number') return Number.isFinite(rawValue) ? rawValue : null
+
+        if (typeof rawValue === 'string') {
+            const trimmed = rawValue.trim()
+            if (!trimmed) return null
+
+            const parsed = Number(trimmed)
+            return Number.isFinite(parsed) ? parsed : null
+        }
+
+        return null
+    }
+
+    get activeAmsFpsValue(): number | null {
+        if (!this.isActiveExtruder || !this.isAmsExtruder) return null
+
+        for (const record of this.extruderFpsStatusRecords) {
+            const value = this.readFpsValue(record)
+            if (typeof value === 'number') return value
+        }
+
+        return null
+    }
+
+    get activeAmsFpsOutput(): string | null {
+        const value = this.activeAmsFpsValue
+
+        if (typeof value !== 'number') return null
+
+        return `Fps: ${value.toFixed(2)}`
+    }
+
     get state() {
-        const extruder = this.afcCurrentLane?.extruder ?? ''
-        if (extruder === this.name) {
+        if (this.isActiveExtruder) {
             if (this.printerIsPrintingOnly) return this.$t('Panels.AfcPanel.Printing')
 
             return this.$t(`Panels.AfcPanel.${this.afcCurrentState}`)
@@ -156,8 +287,9 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get stateLane() {
-        if (this.afcExtruder.lane_loaded) return this.afcExtruder.lane_loaded
-        if (this.afcCurrentLane) return this.afcCurrentLane.name
+        const laneLoaded = this.afcExtruder.lane_loaded
+        if (laneLoaded) return laneLoaded
+        if (this.isActiveExtruder && this.afcCurrentLane) return this.afcCurrentLane.name
 
         return this.$t('Panels.AfcPanel.LaneLoadedNone')
     }

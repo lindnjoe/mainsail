@@ -24,7 +24,7 @@
                 <v-btn
                     color="primary"
                     text
-                    :disabled="printerIsPrinting || !klipperReadyForGui"
+                    :disabled="printerIsPrinting || !klipperReadyForGui || !validToolCount"
                     @click="startPrint(file.filename)">
                     {{ $t('Dialogs.StartPrint.Print') }}
                 </v-btn>
@@ -47,6 +47,7 @@ import AfcMixin from '@/components/mixins/afc'
 })
 export default class StartPrintDialog extends Mixins(BaseMixin, AfcMixin) {
     mdiPrinter3d = mdiPrinter3d
+    validToolCount = true
 
     @Prop({ required: true, default: false }) readonly bool!: boolean
     @Prop({ required: true, default: '' }) readonly currentPath!: string
@@ -85,6 +86,10 @@ export default class StartPrintDialog extends Mixins(BaseMixin, AfcMixin) {
         filename = (this.currentPath + '/' + filename).substring(1)
         this.closeDialog()
         this.$socket.emit('printer.print.start', { filename: filename }, { action: 'switchToDashboard' })
+    }
+
+    validateToolCount(valid: boolean) {
+        this.validToolCount = valid
     }
 
     closeDialog() {

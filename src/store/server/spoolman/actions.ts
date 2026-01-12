@@ -1,7 +1,31 @@
 import Vue from 'vue'
 import { ActionTree } from 'vuex'
 import { RootState } from '@/store/types'
-import { ServerSpoolmanState } from '@/store/server/spoolman/types'
+
+import { ServerSpoolmanState, ServerSpoolmanStateSpool } from '@/store/server/spoolman/types'
+import { SPOOLMAN_LOADED_LANE_EXTRA_FIELD } from '@/store/server/spoolman/constants'
+
+function parseLoadedLaneExtra(value?: string): string | null {
+    if (typeof value !== 'string') return null
+
+    try {
+        const parsed = JSON.parse(value)
+        if (typeof parsed === 'string') return parsed
+    } catch {
+        // ignore JSON parse errors and fall back to raw value
+    }
+
+    return value
+}
+
+function withLoadedLaneExtra(spool: ServerSpoolmanStateSpool): ServerSpoolmanStateSpool {
+    const loadedLane = parseLoadedLaneExtra(spool.extra?.[SPOOLMAN_LOADED_LANE_EXTRA_FIELD])
+
+    return {
+        ...spool,
+        loaded_lane: loadedLane,
+    }
+}
 
 function convertV2response(payload: { error?: { message: string } | null; response: any }) {
     if ((payload.error?.message ?? null) !== null) {
@@ -88,7 +112,7 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
         payload = convertV2response(payload)
         if (payload === null) return
 
-        commit('setActiveSpool', payload)
+        commit('setActiveSpool', withLoadedLaneExtra(payload as ServerSpoolmanStateSpool))
     },
 
     getHealth({ commit, dispatch }, payload) {
@@ -141,7 +165,9 @@ export const actions: ActionTree<ServerSpoolmanState, RootState> = {
         payload = convertV2response(payload)
         if (payload === null) return
 
-        const spools = Object.entries(payload).map((value) => value[1])
+        const spools = Object.entries(payload).map(([, spool]) =>
+            withLoadedLaneExtra(spool as ServerSpoolmanStateSpool)
+        )
         commit('setSpools', spools)
     },
 
