@@ -70,6 +70,8 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
                 return afcIconBoxTurtle
             case 'ams':
                 return afcIconAMS
+            case 'openams':
+                return afcIconAMS
             case 'htlf':
                 return afcIconHtlf
             case 'nightowl':
