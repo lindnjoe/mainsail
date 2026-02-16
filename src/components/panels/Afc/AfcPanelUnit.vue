@@ -68,6 +68,8 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
         switch (this.type) {
             case 'boxturtle':
                 return afcIconBoxTurtle
+            case 'ams':
+                return afcIconAMS
             case 'htlf':
                 return afcIconHtlf
             case 'nightowl':
@@ -86,5 +88,9 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
 <style scoped>
 .afc-unit-container {
     gap: 16px;
+}
+
+.afc-unit-icon-openams {
+    font-size: 36px !important;
 }
 </style>
