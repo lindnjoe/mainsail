@@ -3,7 +3,9 @@
         <v-row>
             <v-col class="pb-0 d-flex flex-row justify-space-between align-center">
                 <h3 class="text-h6 d-flex align-center">
-                    <v-icon v-if="modulIcon" left>{{ modulIcon }}</v-icon>
+                    <v-icon v-if="modulIcon" :class="{ 'afc-unit-icon-openams': type === 'openams' }" left>
+                        {{ modulIcon }}
+                    </v-icon>
                     {{ unitNameOutput }}
                 </h3>
                 <v-spacer />
@@ -95,5 +97,9 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
 <style scoped>
 .afc-unit-container {
     gap: 16px;
+}
+
+.afc-unit-icon-openams {
+    font-size: 36px !important;
 }
 </style>
