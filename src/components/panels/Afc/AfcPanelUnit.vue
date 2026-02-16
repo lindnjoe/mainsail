@@ -54,9 +54,12 @@ export default class AfcPanelUnit extends Mixins(BaseMixin, AfcMixin) {
     }
 
     get type() {
-        const moduleName = this.name.substring(0, this.name.indexOf(' ')).replaceAll('_', '')
+        const typeFromUnit = this.unit?.type
+        if (typeof typeFromUnit === 'string') return typeFromUnit.toLowerCase()
 
-        return moduleName.toLowerCase()
+        const moduleName = this.name.substring(0, this.name.indexOf(' '))
+
+        return moduleName.replace(/^afc_/i, '').replaceAll('_', '').toLowerCase()
     }
 
     get modulIcon() {
