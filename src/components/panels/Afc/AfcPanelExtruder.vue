@@ -231,7 +231,7 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         const records: Record<string, unknown>[] = []
 
         for (const key of this.extruderFpsConfigKeys) {
-            const candidate = this.getPrinterObject(key)
+            const candidate = this.getFpsStatusRecord(key)
             if (!candidate || typeof candidate !== 'object') continue
 
             records.push(candidate as Record<string, unknown>)
@@ -240,10 +240,23 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         return records
     }
 
+    getFpsStatusRecord(configKey: string): Record<string, unknown> | null {
+        const keyCandidates = [configKey]
+        const shortName = configKey.replace(/^fps\s+/i, '').trim()
+        if (shortName && shortName !== configKey) keyCandidates.push(shortName)
+
+        for (const key of keyCandidates) {
+            const candidate = this.getPrinterObject(key)
+            if (candidate && typeof candidate === 'object') return candidate as Record<string, unknown>
+        }
+
+        return null
+    }
+
     readFpsValue(record: Record<string, unknown> | null): number | null {
         if (!record) return null
 
-        const rawValue = record['fps_value']
+        const rawValue = record['fps_value'] ?? record['value']
         if (typeof rawValue === 'number') return Number.isFinite(rawValue) ? rawValue : null
 
         if (typeof rawValue === 'string') {
