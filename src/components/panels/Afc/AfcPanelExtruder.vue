@@ -232,9 +232,10 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
 
         for (const key of this.extruderFpsConfigKeys) {
             const candidate = this.getFpsStatusRecord(key)
-            if (!candidate || typeof candidate !== 'object') continue
+            if (candidate) records.push(candidate)
 
-            records.push(candidate as Record<string, unknown>)
+            const oamsRecord = this.getOamsStatusRecord(key)
+            if (oamsRecord) records.push(oamsRecord)
         }
 
         return records
@@ -246,6 +247,22 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         if (shortName && shortName !== configKey) keyCandidates.push(shortName)
 
         for (const key of keyCandidates) {
+            const candidate = this.getPrinterObject(key)
+            if (candidate && typeof candidate === 'object') return candidate as Record<string, unknown>
+        }
+
+        return null
+    }
+
+    getOamsStatusRecord(configKey: string): Record<string, unknown> | null {
+        const config = this.printerSettingsObject[configKey]
+        if (!config || typeof config !== 'object') return null
+
+        const oamsName = `${(config as Record<string, unknown>)['oams'] ?? ''}`.trim()
+        if (!oamsName) return null
+
+        const oamsKeyCandidates = [`oams ${oamsName}`, oamsName]
+        for (const key of oamsKeyCandidates) {
             const candidate = this.getPrinterObject(key)
             if (candidate && typeof candidate === 'object') return candidate as Record<string, unknown>
         }
