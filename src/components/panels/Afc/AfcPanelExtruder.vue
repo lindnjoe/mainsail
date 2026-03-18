@@ -251,9 +251,12 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
     }
 
     getFpsStatusRecord(configKey: string): Record<string, unknown> | null {
-        const keyCandidates = [configKey]
+        const keyCandidates = [configKey, `AFC_FPS ${configKey}`]
         const shortName = this.normalizeFpsStatusKey(configKey)
-        if (shortName && shortName !== configKey) keyCandidates.push(shortName)
+
+        if (shortName && shortName !== configKey) {
+            keyCandidates.push(shortName, `AFC_FPS ${shortName}`)
+        }
 
         for (const key of keyCandidates) {
             const candidate = this.getPrinterObject(key)
