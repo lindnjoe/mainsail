@@ -216,7 +216,7 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         if (!normalized) return keys
 
         for (const [key, value] of Object.entries(this.printerSettingsObject)) {
-            if (!/^fps\s+/i.test(key)) continue
+            if (!this.isFpsConfigKey(key)) continue
             if (!value || typeof value !== 'object') continue
 
             const record = value as Record<string, unknown>
@@ -241,10 +241,22 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         return records
     }
 
+
+    isFpsConfigKey(key: string): boolean {
+        return /^fps(?:\s+.+|_buffer\d+)$/i.test(key)
+    }
+
+    normalizeFpsStatusKey(configKey: string): string {
+        return configKey.replace(/^fps(?:\s+|_)/i, '').trim()
+    }
+
     getFpsStatusRecord(configKey: string): Record<string, unknown> | null {
-        const keyCandidates = [configKey]
-        const shortName = configKey.replace(/^fps\s+/i, '').trim()
-        if (shortName && shortName !== configKey) keyCandidates.push(shortName)
+        const keyCandidates = [configKey, `AFC_FPS ${configKey}`]
+        const shortName = this.normalizeFpsStatusKey(configKey)
+
+        if (shortName && shortName !== configKey) {
+            keyCandidates.push(shortName, `AFC_FPS ${shortName}`)
+        }
 
         for (const key of keyCandidates) {
             const candidate = this.getPrinterObject(key)
