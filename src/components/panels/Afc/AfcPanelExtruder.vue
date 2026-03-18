@@ -299,8 +299,25 @@ export default class AfcPanelExtruder extends Mixins(BaseMixin, AfcMixin) {
         return null
     }
 
+    getActiveBufferFpsStatusRecord(): Record<string, unknown> | null {
+        const bufferName = `${this.afcCurrentLane?.buffer ?? ''}`.trim()
+        if (!bufferName) return null
+
+        const keyCandidates = [`AFC_FPS ${bufferName}`, bufferName]
+        for (const key of keyCandidates) {
+            const candidate = this.getPrinterObject(key)
+            if (candidate && typeof candidate === 'object') return candidate as Record<string, unknown>
+        }
+
+        return null
+    }
+
     get activeAmsFpsValue(): number | null {
         if (!this.isActiveExtruder || !this.isAmsExtruder) return null
+
+        const activeBufferRecord = this.getActiveBufferFpsStatusRecord()
+        const activeBufferValue = this.readFpsValue(activeBufferRecord)
+        if (typeof activeBufferValue === 'number') return activeBufferValue
 
         for (const record of this.extruderFpsStatusRecords) {
             const value = this.readFpsValue(record)
